@@ -165,9 +165,8 @@ class TestMCPAtlassianAuthenticationError:
         assert hasattr(error, "__context__")
         assert hasattr(error, "__suppress_context__")
 
-        # Test docstring access
-        expected_doc = "Raised when Atlassian API authentication fails (401/403)."
-        assert error.__doc__ == expected_doc
+        # Test docstring access - includes newline in multi-line docstring
+        assert "Raised when Atlassian API authentication fails (401)" in error.__doc__
 
     def test_exception_equality(self):
         """Test exception equality comparison."""

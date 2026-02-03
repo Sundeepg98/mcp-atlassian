@@ -6,6 +6,7 @@ from typing import Any
 import requests
 from requests.exceptions import HTTPError
 
+from ..exceptions import MCPAtlassianAPIError
 from ..models.jira import JiraSearchResult
 from ..utils.errors import raise_for_auth_error, wrap_http_error
 from .client import JiraClient
@@ -167,8 +168,9 @@ class SearchMixin(JiraClient, IssueOperationsProto):
             raise_for_auth_error(http_err, "searching issues")
             raise wrap_http_error(http_err, "searching issues") from http_err
         except Exception as e:
-            logger.error(f"Error searching issues with JQL '{jql}': {str(e)}")
-            raise Exception(f"Error searching issues: {str(e)}") from e
+            msg = f"Error searching issues with JQL '{jql}': {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def get_board_issues(
         self,
@@ -221,17 +223,13 @@ class SearchMixin(JiraClient, IssueOperationsProto):
             )
             return search_result
         except requests.HTTPError as e:
-            logger.error(
-                f"Error searching issues for board with JQL '{board_id}': {str(e.response.content)}"
-            )
-            raise Exception(
-                f"Error searching issues for board with JQL: {str(e.response.content)}"
-            ) from e
+            msg = f"Error searching issues for board '{board_id}': {e.response.content}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
         except Exception as e:
-            logger.error(f"Error searching issues for board with JQL '{jql}': {str(e)}")
-            raise Exception(
-                f"Error searching issues for board with JQL {str(e)}"
-            ) from e
+            msg = f"Error searching issues for board with JQL '{jql}': {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def get_sprint_issues(
         self,
@@ -277,12 +275,10 @@ class SearchMixin(JiraClient, IssueOperationsProto):
             )
             return search_result
         except requests.HTTPError as e:
-            logger.error(
-                f"Error searching issues for sprint '{sprint_id}': {str(e.response.content)}"
-            )
-            raise Exception(
-                f"Error searching issues for sprint: {str(e.response.content)}"
-            ) from e
+            msg = f"Error searching issues for sprint '{sprint_id}': {e.response.content}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
         except Exception as e:
-            logger.error(f"Error searching issues for sprint: {sprint_id}': {str(e)}")
-            raise Exception(f"Error searching issues for sprint: {str(e)}") from e
+            msg = f"Error searching issues for sprint '{sprint_id}': {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e

@@ -4,6 +4,7 @@ import logging
 import re
 from typing import Any
 
+from ..exceptions import MCPAtlassianAPIError
 from ..models import JiraWorklog
 from ..utils import parse_date
 from .client import JiraClient
@@ -151,8 +152,9 @@ class WorklogMixin(JiraClient):
                 "remaining_estimate_updated": remaining_estimate_updated,
             }
         except Exception as e:
-            logger.error(f"Error adding worklog to issue {issue_key}: {str(e)}")
-            raise Exception(f"Error adding worklog: {str(e)}") from e
+            msg = f"Error adding worklog to issue {issue_key}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def get_worklog(self, issue_key: str) -> dict[str, Any]:
         """
@@ -230,5 +232,6 @@ class WorklogMixin(JiraClient):
 
             return worklogs
         except Exception as e:
-            logger.error(f"Error getting worklogs for issue {issue_key}: {str(e)}")
-            raise Exception(f"Error getting worklogs: {str(e)}") from e
+            msg = f"Error getting worklogs for issue {issue_key}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e

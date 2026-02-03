@@ -586,7 +586,7 @@ class TestUsersMixin:
         users_mixin._lookup_user_by_permissions = MagicMock(return_value=None)
         # Simulate the identifier cannot be resolved to an account ID
         with pytest.raises(
-            ValueError, match="Could not determine how to look up user 'nonexistent'."
+            ValueError, match="Could not determine how to look up user 'nonexistent'"
         ):
             users_mixin.get_user_profile_by_identifier("nonexistent")
 
@@ -601,11 +601,11 @@ class TestUsersMixin:
         mock_response.status_code = 403
         http_error = requests.exceptions.HTTPError(response=mock_response)
         users_mixin.jira.user = MagicMock(side_effect=http_error)
-        from mcp_atlassian.exceptions import MCPAtlassianAuthenticationError
+        from mcp_atlassian.exceptions import MCPAtlassianPermissionError
 
         with pytest.raises(
-            MCPAtlassianAuthenticationError,
-            match="Permission denied accessing user 'restricted_user'.",
+            MCPAtlassianPermissionError,
+            match="Permission denied.*getting user profile for 'restricted_user'",
         ):
             users_mixin.get_user_profile_by_identifier("restricted_user")
 

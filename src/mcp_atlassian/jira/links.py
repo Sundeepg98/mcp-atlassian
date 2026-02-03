@@ -5,6 +5,7 @@ from typing import Any
 
 from requests.exceptions import HTTPError
 
+from ..exceptions import MCPAtlassianAPIError
 from ..models.jira import JiraIssueLinkType
 from ..utils.errors import raise_for_auth_error, wrap_http_error
 from .client import JiraClient
@@ -47,9 +48,9 @@ class LinksMixin(JiraClient):
             raise_for_auth_error(http_err, "getting issue link types")
             raise wrap_http_error(http_err, "getting issue link types") from http_err
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Error getting issue link types: {error_msg}", exc_info=True)
-            raise Exception(f"Error getting issue link types: {error_msg}") from e
+            msg = f"Error getting issue link types: {e}"
+            logger.error(msg, exc_info=True)
+            raise MCPAtlassianAPIError(msg) from e
 
     def create_issue_link(self, data: dict[str, Any]) -> dict[str, Any]:
         """
@@ -105,9 +106,9 @@ class LinksMixin(JiraClient):
             raise_for_auth_error(http_err, "creating issue link")
             raise wrap_http_error(http_err, "creating issue link") from http_err
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Error creating issue link: {error_msg}", exc_info=True)
-            raise Exception(f"Error creating issue link: {error_msg}") from e
+            msg = f"Error creating issue link: {e}"
+            logger.error(msg, exc_info=True)
+            raise MCPAtlassianAPIError(msg) from e
 
     def create_remote_issue_link(
         self, issue_key: str, link_data: dict[str, Any]
@@ -172,11 +173,9 @@ class LinksMixin(JiraClient):
                 http_err, f"creating remote issue link for {issue_key}"
                 ) from http_err
         except Exception as e:
-            error_msg = str(e)
-            logger.error(
-                f"Error creating remote issue link: {error_msg}", exc_info=True
-            )
-            raise Exception(f"Error creating remote issue link: {error_msg}") from e
+            msg = f"Error creating remote issue link: {e}"
+            logger.error(msg, exc_info=True)
+            raise MCPAtlassianAPIError(msg) from e
 
     def remove_issue_link(self, link_id: str) -> dict[str, Any]:
         """
@@ -214,6 +213,6 @@ class LinksMixin(JiraClient):
             raise_for_auth_error(http_err, f"removing issue link {link_id}")
             raise wrap_http_error(http_err, f"removing issue link {link_id}") from http_err
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Error removing issue link: {error_msg}", exc_info=True)
-            raise Exception(f"Error removing issue link: {error_msg}") from e
+            msg = f"Error removing issue link: {e}"
+            logger.error(msg, exc_info=True)
+            raise MCPAtlassianAPIError(msg) from e

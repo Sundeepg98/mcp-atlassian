@@ -274,7 +274,7 @@ class TestUsersMixin:
         # Act/Assert
         with pytest.raises(
             MCPAtlassianAuthenticationError,
-            match="Confluence token validation failed: 401 from /rest/api/user/current",
+            match="Authentication failed.*401.*validating Confluence token",
         ):
             users_mixin.get_current_user_info()
 
@@ -285,11 +285,12 @@ class TestUsersMixin:
         mock_response.status_code = 403
         http_error = HTTPError(response=mock_response)
         users_mixin.confluence.get.side_effect = http_error
+        from mcp_atlassian.exceptions import MCPAtlassianPermissionError
 
-        # Act/Assert
+        # Act/Assert - 403 now raises PermissionError
         with pytest.raises(
-            MCPAtlassianAuthenticationError,
-            match="Confluence token validation failed: 403 from /rest/api/user/current",
+            MCPAtlassianPermissionError,
+            match="Permission denied.*403.*validating Confluence token",
         ):
             users_mixin.get_current_user_info()
 

@@ -113,7 +113,7 @@ class TestTransitionsMixin:
 
         # Call the method and verify exception
         with pytest.raises(
-            Exception, match="Error getting transitions: Transition fetch error"
+            Exception, match="Error getting transitions for TEST-123: Transition fetch error"
         ):
             transitions_mixin.get_available_transitions("TEST-123")
 

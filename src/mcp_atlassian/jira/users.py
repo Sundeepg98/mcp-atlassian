@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, TypeVar
 import requests
 from requests.exceptions import HTTPError
 
+from mcp_atlassian.exceptions import MCPAtlassianAPIError
 from mcp_atlassian.models.jira.common import JiraUser
 from mcp_atlassian.utils.errors import (
     raise_for_auth_error,
@@ -51,7 +52,7 @@ class UsersMixin(JiraClient):
                 logger.error(
                     f"{error_msg} Response type: {type(myself_data)}, Response: {str(myself_data)[:200]}"
                 )
-                raise Exception(error_msg)
+                raise MCPAtlassianAPIError(error_msg)
 
             logger.debug(f"Received myself_data: {str(myself_data)[:500]}")
 
@@ -81,7 +82,7 @@ class UsersMixin(JiraClient):
         except Exception as e:
             logger.error(f"Error getting current user account ID: {e}", exc_info=True)
             error_msg = f"Unable to get current user account ID: {e}"
-            raise Exception(error_msg) from e
+            raise MCPAtlassianAPIError(error_msg) from e
 
     def _get_account_id(self, assignee: str) -> str:
         """
@@ -254,17 +255,16 @@ class UsersMixin(JiraClient):
                 ):
                     api_kwargs["account_id"] = resolved_id
                     logger.debug(
-                        f"Resolved email '{identifier}' to accountId '{resolved_id}'. Determined param: account_id (Cloud)"
+                        f"Resolved email '{identifier}' to accountId '{resolved_id}'. "
+                        "Determined param: account_id (Cloud)"
                     )
                 else:
-                    raise ValueError(
-                        f"Could not resolve email '{identifier}' to a valid account ID for Jira Cloud."
-                    )
+                    msg = f"Could not resolve email '{identifier}' to a valid account ID for Jira Cloud"
+                    raise ValueError(msg)
             except Exception as e:
+                msg = f"Could not resolve email '{identifier}' to a valid account ID for Jira Cloud"
                 logger.warning(f"Failed to resolve email '{identifier}': {e}")
-                raise ValueError(
-                    f"Could not resolve email '{identifier}' to a valid account ID for Jira Cloud."
-                ) from e
+                raise ValueError(msg) from e
         # Cloud: identifier is not accountId or email, try to resolve
         else:
             logger.debug(
@@ -277,20 +277,17 @@ class UsersMixin(JiraClient):
                     f"Resolved identifier '{identifier}' to accountId '{account_id_resolved}'. Determined param: account_id (Cloud)"
                 )
             except ValueError as e:
+                msg = f"Could not determine how to look up user '{identifier}'"
                 logger.error(
-                    f"Could not resolve identifier '{identifier}' to a usable format (accountId/username/key)."
+                    f"Could not resolve identifier '{identifier}' to a usable format "
+                    "(accountId/username/key)"
                 )
-                raise ValueError(
-                    f"Could not determine how to look up user '{identifier}'."
-                ) from e
+                raise ValueError(msg) from e
 
         if not api_kwargs:
-            logger.error(
-                f"Logic failed to determine API parameters for identifier '{identifier}'"
-            )
-            raise ValueError(
-                f"Could not determine the correct parameter to use for identifier '{identifier}'."
-            )
+            msg = f"Could not determine the correct parameter to use for identifier '{identifier}'"
+            logger.error(msg)
+            raise ValueError(msg)
 
         return api_kwargs
 
@@ -315,10 +312,12 @@ class UsersMixin(JiraClient):
             logger.debug(f"Calling self.jira.user() with parameters: {api_kwargs}")
             user_data = self.jira.user(**api_kwargs)
             if not isinstance(user_data, dict):
+                msg = f"User '{identifier}' not found or lookup failed"
                 logger.error(
-                    f"User lookup for '{identifier}' returned unexpected type: {type(user_data)}. Data: {user_data}"
+                    f"User lookup for '{identifier}' returned unexpected type: "
+                    f"{type(user_data)}. Data: {user_data}"
                 )
-                raise ValueError(f"User '{identifier}' not found or lookup failed.")
+                raise ValueError(msg)
             return JiraUser.from_api_response(user_data)
         except HTTPError as http_err:
             raise_for_not_found(http_err, "user", identifier, "getting user profile")
@@ -327,9 +326,6 @@ class UsersMixin(JiraClient):
                 http_err, f"getting user profile for '{identifier}'"
             ) from http_err
         except Exception as e:
-            logger.exception(
-                f"Unexpected error getting/processing user profile for '{identifier}':"
-            )
-            raise Exception(
-                f"Error processing user profile for '{identifier}': {str(e)}"
-            ) from e
+            msg = f"Error processing user profile for '{identifier}': {e}"
+            logger.exception(msg)
+            raise MCPAtlassianAPIError(msg) from e

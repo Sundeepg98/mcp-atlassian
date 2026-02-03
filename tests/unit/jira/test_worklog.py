@@ -175,7 +175,7 @@ class TestWorklogMixin:
 
         # Call the method and verify exception
         with pytest.raises(
-            Exception, match="Error getting worklogs: Worklog fetch error"
+            Exception, match="Error getting worklogs for issue TEST-123: Worklog fetch error"
         ):
             worklog_mixin.get_worklogs("TEST-123")
 
@@ -328,7 +328,7 @@ class TestWorklogMixin:
         )
 
         # Call the method and verify exception
-        with pytest.raises(Exception, match="Error adding worklog: Worklog add error"):
+        with pytest.raises(Exception, match="Error adding worklog to issue TEST-123: Worklog add error"):
             worklog_mixin.add_worklog("TEST-123", "1h")
 
     def test_add_worklog_with_original_estimate_error(self, worklog_mixin):

@@ -5,6 +5,7 @@ from typing import Any
 
 from requests.exceptions import HTTPError
 
+from ..exceptions import MCPAtlassianAPIError
 from ..models import JiraIssue, JiraTransition
 from ..utils.errors import raise_for_auth_error, wrap_http_error
 from .client import JiraClient
@@ -70,9 +71,9 @@ class TransitionsMixin(JiraClient, IssueOperationsProto, UsersOperationsProto):
                 http_err, f"getting transitions for {issue_key}"
             ) from http_err
         except Exception as e:
-            error_msg = f"Error getting transitions for {issue_key}: {str(e)}"
-            logger.error(error_msg)
-            raise Exception(f"Error getting transitions: {str(e)}") from e
+            msg = f"Error getting transitions for {issue_key}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def get_transitions(self, issue_key: str) -> list[dict[str, Any]]:
         """

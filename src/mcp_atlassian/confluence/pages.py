@@ -5,6 +5,7 @@ import logging
 import requests
 from requests.exceptions import HTTPError
 
+from ..exceptions import MCPAtlassianAPIError
 from ..models.confluence import ConfluencePage
 from ..utils.errors import raise_for_auth_error, wrap_http_error
 from .client import ConfluenceClient
@@ -71,7 +72,7 @@ class PagesMixin(ConfluenceClient):
             # Check if API returned an error string instead of a dict
             if isinstance(page, str):
                 error_msg = f"API returned error response: {page[:500]}"
-                raise Exception(error_msg)
+                raise MCPAtlassianAPIError(error_msg)
 
             space_key = page.get("space", {}).get("key", "")
             try:
@@ -106,10 +107,9 @@ class PagesMixin(ConfluenceClient):
             raise_for_auth_error(http_err, f"retrieving page {page_id}")
             raise wrap_http_error(http_err, f"retrieving page {page_id}") from http_err
         except Exception as e:
-            logger.error(
-                f"Error retrieving page content for page ID {page_id}: {str(e)}"
-            )
-            raise Exception(f"Error retrieving page content: {str(e)}") from e
+            msg = f"Error retrieving page content for page ID {page_id}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def get_page_ancestors(self, page_id: str) -> list[ConfluencePage]:
         """
@@ -484,12 +484,9 @@ class PagesMixin(ConfluenceClient):
 
             return self.get_page_content(page_id)
         except Exception as e:
-            logger.error(
-                f"Error creating page '{title}' in space {space_key}: {str(e)}"
-            )
-            raise Exception(
-                f"Failed to create page '{title}' in space {space_key}: {str(e)}"
-            ) from e
+            msg = f"Failed to create page '{title}' in space {space_key}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def update_page(
         self,
@@ -582,8 +579,9 @@ class PagesMixin(ConfluenceClient):
             # After update, refresh the page data
             return self.get_page_content(page_id)
         except Exception as e:
-            logger.error(f"Error updating page {page_id}: {str(e)}")
-            raise Exception(f"Failed to update page {page_id}: {str(e)}") from e
+            msg = f"Failed to update page {page_id}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def get_page_children(
         self,
@@ -739,5 +737,6 @@ class PagesMixin(ConfluenceClient):
                 return True
 
         except Exception as e:
-            logger.error(f"Error deleting page {page_id}: {str(e)}")
-            raise Exception(f"Failed to delete page {page_id}: {str(e)}") from e
+            msg = f"Failed to delete page {page_id}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e

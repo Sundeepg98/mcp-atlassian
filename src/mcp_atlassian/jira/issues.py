@@ -6,6 +6,7 @@ from typing import Any
 
 from requests.exceptions import HTTPError
 
+from ..exceptions import MCPAtlassianAPIError
 from ..models.jira import JiraIssue
 from ..models.jira.common import JiraChangelog
 from ..utils import parse_date
@@ -213,9 +214,9 @@ class IssuesMixin(
             raise_for_auth_error(http_err, f"retrieving issue {issue_key}")
             raise wrap_http_error(http_err, f"retrieving issue {issue_key}") from http_err
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Error retrieving issue {issue_key}: {error_msg}")
-            raise Exception(f"Error retrieving issue {issue_key}: {error_msg}") from e
+            msg = f"Error retrieving issue {issue_key}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def _normalize_comment_limit(self, comment_limit: int | str | None) -> int | None:
         """
@@ -1078,9 +1079,9 @@ class IssuesMixin(
             return issue
 
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Error updating issue {issue_key}: {error_msg}")
-            raise ValueError(f"Failed to update issue {issue_key}: {error_msg}") from e
+            msg = f"Failed to update issue {issue_key}: {e}"
+            logger.error(msg)
+            raise ValueError(msg) from e
 
     def _update_issue_with_status(
         self, issue_key: str, fields: dict[str, Any]
@@ -1232,7 +1233,7 @@ class IssuesMixin(
         except Exception as e:
             msg = f"Error deleting issue {issue_key}: {str(e)}"
             logger.error(msg)
-            raise Exception(msg) from e
+            raise MCPAtlassianAPIError(msg) from e
 
     def _log_available_fields(self, fields: list[dict]) -> None:
         """
@@ -1300,10 +1301,9 @@ class IssuesMixin(
             transitions = self.jira.get_issue_transitions(issue_key)
             return transitions
         except Exception as e:
-            logger.error(f"Error getting transitions for issue {issue_key}: {str(e)}")
-            raise Exception(
-                f"Error getting transitions for issue {issue_key}: {str(e)}"
-            ) from e
+            msg = f"Error getting transitions for issue {issue_key}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def transition_issue(self, issue_key: str, transition_id: str) -> JiraIssue:
         """
@@ -1370,9 +1370,8 @@ class IssuesMixin(
 
                 # Validate required fields
                 if not all([project_key, summary, issue_type]):
-                    raise ValueError(
-                        f"Missing required fields for issue: {project_key=}, {summary=}, {issue_type=}"
-                    )
+                    msg = f"Missing required fields for issue: {project_key=}, {summary=}, {issue_type=}"
+                    raise ValueError(msg)
 
                 # Prepare fields dictionary
                 fields = {

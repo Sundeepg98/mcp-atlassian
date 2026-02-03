@@ -762,6 +762,6 @@ class TestEpicsMixin:
         # Call the method and expect an error
         with pytest.raises(
             Exception,
-            match="Error getting epic issues: API error",
+            match="Error getting issues for epic EPIC-123: API error",
         ):
             epics_mixin.get_epic_issues("EPIC-123")

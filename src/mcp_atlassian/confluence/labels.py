@@ -2,6 +2,7 @@
 
 import logging
 
+from ..exceptions import MCPAtlassianAPIError
 from ..models.confluence import ConfluenceLabel
 from .client import ConfluenceClient
 
@@ -42,10 +43,9 @@ class LabelsMixin(ConfluenceClient):
             return label_models
 
         except Exception as e:
-            logger.error(f"Failed fetching labels from page {page_id}: {str(e)}")
-            raise Exception(
-                f"Failed fetching labels from page {page_id}: {str(e)}"
-            ) from e
+            msg = f"Failed fetching labels from page {page_id}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def add_page_label(self, page_id: str, name: str) -> list[ConfluenceLabel]:
         """
@@ -68,12 +68,11 @@ class LabelsMixin(ConfluenceClient):
                 "page_id": page_id,
                 "label": name,
             }
-            response = self.confluence.set_page_label(**update_kwargs)
+            self.confluence.set_page_label(**update_kwargs)
 
             # After update, refresh the page data
             return self.get_page_labels(page_id)
         except Exception as e:
-            logger.error(f"Error adding label '{name}' to page {page_id}: {str(e)}")
-            raise Exception(
-                f"Failed to add label '{name}' to page {page_id}: {str(e)}"
-            ) from e
+            msg = f"Failed to add label '{name}' to page {page_id}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e

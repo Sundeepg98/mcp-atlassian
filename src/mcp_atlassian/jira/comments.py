@@ -3,6 +3,7 @@
 import logging
 from typing import Any
 
+from ..exceptions import MCPAtlassianAPIError
 from ..utils import parse_date
 from .client import JiraClient
 
@@ -49,8 +50,9 @@ class CommentsMixin(JiraClient):
 
             return processed_comments
         except Exception as e:
-            logger.error(f"Error getting comments for issue {issue_key}: {str(e)}")
-            raise Exception(f"Error getting comments: {str(e)}") from e
+            msg = f"Error getting comments for issue {issue_key}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def add_comment(
         self, issue_key: str, comment: str, visibility: dict[str, str] | None = None
@@ -88,8 +90,9 @@ class CommentsMixin(JiraClient):
                 "author": result.get("author", {}).get("displayName", "Unknown"),
             }
         except Exception as e:
-            logger.error(f"Error adding comment to issue {issue_key}: {str(e)}")
-            raise Exception(f"Error adding comment: {str(e)}") from e
+            msg = f"Error adding comment to issue {issue_key}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def edit_comment(
         self,
@@ -132,10 +135,9 @@ class CommentsMixin(JiraClient):
                 "author": result.get("author", {}).get("displayName", "Unknown"),
             }
         except Exception as e:
-            logger.error(
-                f"Error editing comment {comment_id} on issue {issue_key}: {str(e)}"
-            )
-            raise Exception(f"Error editing comment: {str(e)}") from e
+            msg = f"Error editing comment {comment_id} on issue {issue_key}: {e}"
+            logger.error(msg)
+            raise MCPAtlassianAPIError(msg) from e
 
     def _markdown_to_jira(self, markdown_text: str) -> str:
         """
