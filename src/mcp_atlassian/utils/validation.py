@@ -9,7 +9,7 @@ from typing import Any, TypeVar
 
 T = TypeVar("T")
 
-logger = logging.getLogger("mcp-atlassian.utils.validation")
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "ensure_dict_response",

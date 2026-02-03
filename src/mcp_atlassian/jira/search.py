@@ -13,7 +13,7 @@ from .client import JiraClient
 from .constants import DEFAULT_READ_JIRA_FIELDS
 from .protocols import IssueOperationsProto
 
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 
 class SearchMixin(JiraClient, IssueOperationsProto):

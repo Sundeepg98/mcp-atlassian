@@ -7,7 +7,7 @@ import requests
 from ..models.confluence import ConfluenceComment
 from .client import ConfluenceClient
 
-logger = logging.getLogger("mcp-atlassian")
+logger = logging.getLogger(__name__)
 
 
 class CommentsMixin(ConfluenceClient):

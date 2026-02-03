@@ -8,7 +8,7 @@ from thefuzz import fuzz
 from .client import JiraClient
 from .protocols import EpicOperationsProto, UsersOperationsProto
 
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 
 class FieldsMixin(JiraClient, EpicOperationsProto, UsersOperationsProto):

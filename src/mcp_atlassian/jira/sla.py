@@ -23,7 +23,7 @@ from .config import SLAConfig
 from .metrics import MetricsMixin
 from .protocols import MetricsOperationsProto
 
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 # Available SLA metrics
 AVAILABLE_METRICS = [

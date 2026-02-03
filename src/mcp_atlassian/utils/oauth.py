@@ -21,7 +21,7 @@ import keyring
 import requests
 
 # Configure logging
-logger = logging.getLogger("mcp-atlassian.oauth")
+logger = logging.getLogger(__name__)
 
 # Constants
 TOKEN_URL = "https://auth.atlassian.com/oauth/token"  # noqa: S105 - This is a public API endpoint URL, not a password

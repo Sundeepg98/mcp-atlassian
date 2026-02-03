@@ -10,7 +10,7 @@ from ..models.jira import JiraSprint
 from ..utils import parse_date
 from .client import JiraClient
 
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 
 class SprintsMixin(JiraClient):

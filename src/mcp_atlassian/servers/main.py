@@ -29,7 +29,7 @@ from .confluence import confluence_mcp
 from .context import MainAppContext
 from .jira import jira_mcp
 
-logger = logging.getLogger("mcp-atlassian.server.main")
+logger = logging.getLogger(__name__)
 
 
 async def health_check(request: Request) -> JSONResponse:

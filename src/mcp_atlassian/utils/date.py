@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import dateutil.parser
 
-logger = logging.getLogger("mcp-atlassian")
+logger = logging.getLogger(__name__)
 
 
 def parse_date(date_str: str | int | None) -> datetime | None:

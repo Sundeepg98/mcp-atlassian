@@ -10,7 +10,7 @@ from .client import JiraClient
 from .protocols import AttachmentsOperationsProto
 
 # Configure logging
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 
 class AttachmentsMixin(JiraClient, AttachmentsOperationsProto):

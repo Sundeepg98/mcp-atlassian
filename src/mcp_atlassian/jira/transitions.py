@@ -11,7 +11,7 @@ from ..utils.errors import raise_for_auth_error, wrap_http_error
 from .client import JiraClient
 from .protocols import IssueOperationsProto, UsersOperationsProto
 
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 
 class TransitionsMixin(JiraClient, IssueOperationsProto, UsersOperationsProto):

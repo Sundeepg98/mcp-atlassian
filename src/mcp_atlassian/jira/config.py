@@ -185,7 +185,7 @@ class JiraConfig:
             # Server/DC: PAT takes priority over OAuth (fixes #824)
             if personal_token:
                 if oauth_config:
-                    logger = logging.getLogger("mcp-atlassian.jira.config")
+                    logger = logging.getLogger(__name__)
                     logger.warning(
                         "Both PAT and OAuth configured for Server/DC. Using PAT."
                     )
@@ -249,7 +249,7 @@ class JiraConfig:
         Returns:
             bool: True if authentication is fully configured, False otherwise.
         """
-        logger = logging.getLogger("mcp-atlassian.jira.config")
+        logger = logging.getLogger(__name__)
         if self.auth_type == "oauth":
             # Handle different OAuth configuration types
             if self.oauth_config:

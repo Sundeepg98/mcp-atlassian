@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 from .constants import EMPTY_STRING
 
-logger = logging.getLogger("mcp-atlassian")
+logger = logging.getLogger(__name__)
 
 # Type variable for the return type of from_api_response
 T = TypeVar("T", bound="ApiModel")

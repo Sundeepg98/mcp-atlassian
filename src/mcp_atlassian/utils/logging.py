@@ -38,14 +38,14 @@ def setup_logging(
     root_logger.addHandler(handler)
 
     # Configure specific loggers
-    loggers = ["mcp-atlassian", "mcp.server", "mcp.server.lowlevel.server", "mcp-jira"]
+    loggers = ["mcp_atlassian", "mcp.server", "mcp.server.lowlevel.server"]
 
     for logger_name in loggers:
         logger = logging.getLogger(logger_name)
         logger.setLevel(level)
 
     # Return the application logger
-    return logging.getLogger("mcp-atlassian")
+    return logging.getLogger("mcp_atlassian")
 
 
 def mask_sensitive(value: str | None, keep_chars: int = 4) -> str:

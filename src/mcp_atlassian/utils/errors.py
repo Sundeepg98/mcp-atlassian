@@ -25,7 +25,7 @@ from mcp_atlassian.models.constants import (
     HTTP_SERVER_ERROR_MIN,
 )
 
-logger = logging.getLogger("mcp-atlassian")
+logger = logging.getLogger(__name__)
 
 
 def get_http_status_code(http_err: HTTPError) -> int | None:

@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from ..utils.oauth import OAuthConfig
 
 # Configure logging
-logger = logging.getLogger("mcp-atlassian.oauth-setup")
+logger = logging.getLogger(__name__)
 
 # Global variables for callback handling
 authorization_code = None

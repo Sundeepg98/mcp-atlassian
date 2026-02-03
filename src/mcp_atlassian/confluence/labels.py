@@ -6,7 +6,7 @@ from ..exceptions import MCPAtlassianAPIError
 from ..models.confluence import ConfluenceLabel
 from .client import ConfluenceClient
 
-logger = logging.getLogger("mcp-atlassian")
+logger = logging.getLogger(__name__)
 
 
 class LabelsMixin(ConfluenceClient):

@@ -6,7 +6,7 @@ from typing import Any
 
 from .base import BasePreprocessor
 
-logger = logging.getLogger("mcp-atlassian")
+logger = logging.getLogger(__name__)
 
 
 class JiraPreprocessor(BasePreprocessor):

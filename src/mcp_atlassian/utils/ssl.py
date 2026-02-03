@@ -9,7 +9,7 @@ from requests.adapters import HTTPAdapter
 from requests.sessions import Session
 from urllib3.poolmanager import PoolManager
 
-logger = logging.getLogger("mcp-atlassian")
+logger = logging.getLogger(__name__)
 
 
 class SSLIgnoreAdapter(HTTPAdapter):

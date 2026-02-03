@@ -9,7 +9,7 @@ from ..exceptions import MCPAtlassianAuthenticationError
 from ..utils.errors import raise_for_auth_error
 from .client import ConfluenceClient
 
-logger = logging.getLogger("mcp-atlassian")
+logger = logging.getLogger(__name__)
 
 
 class UsersMixin(ConfluenceClient):

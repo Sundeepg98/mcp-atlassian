@@ -8,7 +8,7 @@ import requests
 from ..models.jira import JiraBoard
 from .client import JiraClient
 
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 
 class BoardsMixin(JiraClient):

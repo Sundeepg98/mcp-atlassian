@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     )
     from mcp_atlassian.jira.config import JiraConfig as UserJiraConfigType
 
-logger = logging.getLogger("mcp-atlassian.servers.dependencies")
+logger = logging.getLogger(__name__)
 
 
 def _create_user_config_for_fetcher(

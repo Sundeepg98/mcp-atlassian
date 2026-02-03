@@ -16,7 +16,7 @@ from ..utils import parse_date
 from .client import JiraClient
 from .protocols import IssueOperationsProto
 
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 
 class MetricsMixin(JiraClient, IssueOperationsProto):

@@ -22,7 +22,7 @@ from .protocols import (
     UsersOperationsProto,
 )
 
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 
 class IssuesMixin(

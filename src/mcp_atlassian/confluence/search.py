@@ -12,7 +12,7 @@ from ..utils.decorators import handle_atlassian_api_errors
 from .client import ConfluenceClient
 from .utils import quote_cql_identifier_if_needed
 
-logger = logging.getLogger("mcp-atlassian")
+logger = logging.getLogger(__name__)
 
 
 class SearchMixin(ConfluenceClient):

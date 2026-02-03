@@ -9,7 +9,7 @@ from ..models.jira.version import JiraVersion
 from .client import JiraClient
 from .protocols import SearchOperationsProto
 
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 
 class ProjectsMixin(JiraClient, SearchOperationsProto):

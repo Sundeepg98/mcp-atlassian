@@ -344,7 +344,7 @@ class TestUserTokenMiddleware:
             (b"mcp-session-id", b"test-session-123"),
         ]
 
-        with caplog.at_level(logging.DEBUG, logger="mcp-atlassian.server.main"):
+        with caplog.at_level(logging.DEBUG, logger="mcp_atlassian.servers.main"):
             await middleware(mock_scope, mock_receive, mock_send)
 
         assert "MCP-Session-ID header found: test-session-123" in caplog.text

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 JiraUserType = TypeVar("JiraUserType", bound="JiraUser")
 
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 
 class UsersMixin(JiraClient):

@@ -10,7 +10,7 @@ from ..models.jira import JiraIssueLinkType
 from ..utils.errors import raise_for_auth_error, wrap_http_error
 from .client import JiraClient
 
-logger = logging.getLogger("mcp-jira")
+logger = logging.getLogger(__name__)
 
 
 class LinksMixin(JiraClient):

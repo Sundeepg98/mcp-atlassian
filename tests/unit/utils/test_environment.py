@@ -12,7 +12,7 @@ from tests.utils.mocks import MockEnvironment
 @pytest.fixture(autouse=True)
 def setup_logger():
     """Ensure logger is set to INFO level for capturing log messages."""
-    logger = logging.getLogger("mcp-atlassian.utils.environment")
+    logger = logging.getLogger("mcp_atlassian.utils.environment")
     original_level = logger.level
     logger.setLevel(logging.INFO)
     yield

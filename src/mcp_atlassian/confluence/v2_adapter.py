@@ -13,7 +13,7 @@ from requests.exceptions import HTTPError
 
 from .utils import emoji_to_hex_id, extract_emoji_from_property
 
-logger = logging.getLogger("mcp-atlassian")
+logger = logging.getLogger(__name__)
 
 
 class ConfluenceV2Adapter:

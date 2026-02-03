@@ -6,7 +6,7 @@ import sys
 import threading
 from typing import Any
 
-logger = logging.getLogger("mcp-atlassian.utils.lifecycle")
+logger = logging.getLogger(__name__)
 
 # Global shutdown event for signal-safe handling
 _shutdown_event = threading.Event()
