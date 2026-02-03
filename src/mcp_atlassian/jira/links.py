@@ -5,8 +5,8 @@ from typing import Any
 
 from requests.exceptions import HTTPError
 
-from ..exceptions import MCPAtlassianAuthenticationError
 from ..models.jira import JiraIssueLinkType
+from ..utils.errors import raise_for_auth_error, wrap_http_error
 from .client import JiraClient
 
 logger = logging.getLogger("mcp-jira")
@@ -44,22 +44,8 @@ class LinksMixin(JiraClient):
             return link_types
 
         except HTTPError as http_err:
-            if http_err.response is not None and http_err.response.status_code in [
-                401,
-                403,
-            ]:
-                error_msg = (
-                    f"Authentication failed for Jira API "
-                    f"({http_err.response.status_code}). "
-                    "Token may be expired or invalid. Please verify credentials."
-                )
-                logger.error(error_msg)
-                raise MCPAtlassianAuthenticationError(error_msg) from http_err
-            else:
-                logger.error(f"HTTP error during API call: {http_err}", exc_info=True)
-                raise Exception(
-                    f"Error getting issue link types: {http_err}"
-                ) from http_err
+            raise_for_auth_error(http_err, "getting issue link types")
+            raise wrap_http_error(http_err, "getting issue link types") from http_err
         except Exception as e:
             error_msg = str(e)
             logger.error(f"Error getting issue link types: {error_msg}", exc_info=True)
@@ -116,20 +102,8 @@ class LinksMixin(JiraClient):
             return response
 
         except HTTPError as http_err:
-            if http_err.response is not None and http_err.response.status_code in [
-                401,
-                403,
-            ]:
-                error_msg = (
-                    f"Authentication failed for Jira API "
-                    f"({http_err.response.status_code}). "
-                    "Token may be expired or invalid. Please verify credentials."
-                )
-                logger.error(error_msg)
-                raise MCPAtlassianAuthenticationError(error_msg) from http_err
-            else:
-                logger.error(f"HTTP error during API call: {http_err}", exc_info=True)
-                raise Exception(f"Error creating issue link: {http_err}") from http_err
+            raise_for_auth_error(http_err, "creating issue link")
+            raise wrap_http_error(http_err, "creating issue link") from http_err
         except Exception as e:
             error_msg = str(e)
             logger.error(f"Error creating issue link: {error_msg}", exc_info=True)
@@ -193,21 +167,9 @@ class LinksMixin(JiraClient):
             return result
 
         except HTTPError as http_err:
-            if http_err.response is not None and http_err.response.status_code in [
-                401,
-                403,
-            ]:
-                error_msg = (
-                    f"Authentication failed for Jira API "
-                    f"({http_err.response.status_code}). "
-                    "Token may be expired or invalid. Please verify credentials."
-                )
-                logger.error(error_msg)
-                raise MCPAtlassianAuthenticationError(error_msg) from http_err
-            else:
-                logger.error(f"HTTP error during API call: {http_err}", exc_info=True)
-                raise Exception(
-                    f"Error creating remote issue link: {http_err}"
+            raise_for_auth_error(http_err, f"creating remote issue link for {issue_key}")
+            raise wrap_http_error(
+                http_err, f"creating remote issue link for {issue_key}"
                 ) from http_err
         except Exception as e:
             error_msg = str(e)
@@ -249,20 +211,8 @@ class LinksMixin(JiraClient):
             return response
 
         except HTTPError as http_err:
-            if http_err.response is not None and http_err.response.status_code in [
-                401,
-                403,
-            ]:
-                error_msg = (
-                    f"Authentication failed for Jira API "
-                    f"({http_err.response.status_code}). "
-                    "Token may be expired or invalid. Please verify credentials."
-                )
-                logger.error(error_msg)
-                raise MCPAtlassianAuthenticationError(error_msg) from http_err
-            else:
-                logger.error(f"HTTP error during API call: {http_err}", exc_info=True)
-                raise Exception(f"Error removing issue link: {http_err}") from http_err
+            raise_for_auth_error(http_err, f"removing issue link {link_id}")
+            raise wrap_http_error(http_err, f"removing issue link {link_id}") from http_err
         except Exception as e:
             error_msg = str(e)
             logger.error(f"Error removing issue link: {error_msg}", exc_info=True)

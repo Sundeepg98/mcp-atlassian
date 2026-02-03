@@ -7,8 +7,12 @@ from typing import TYPE_CHECKING, TypeVar
 import requests
 from requests.exceptions import HTTPError
 
-from mcp_atlassian.exceptions import MCPAtlassianAuthenticationError
 from mcp_atlassian.models.jira.common import JiraUser
+from mcp_atlassian.utils.errors import (
+    raise_for_auth_error,
+    raise_for_not_found,
+    wrap_http_error,
+)
 
 from .client import JiraClient
 
@@ -72,17 +76,8 @@ class UsersMixin(JiraClient):
             self._current_user_account_id = account_id
             return account_id
         except HTTPError as http_err:
-            response_content = ""
-            if http_err.response is not None:
-                try:
-                    response_content = http_err.response.text
-                except Exception:
-                    response_content = "(could not decode response content)"
-            logger.error(
-                f"HTTPError getting current user account ID: {http_err}. Response: {response_content[:500]}"
-            )
-            error_msg = f"Unable to get current user account ID: {http_err}"
-            raise Exception(error_msg) from http_err
+            raise_for_auth_error(http_err, "getting current user account ID")
+            raise wrap_http_error(http_err, "getting current user account ID") from http_err
         except Exception as e:
             logger.error(f"Error getting current user account ID: {e}", exc_info=True)
             error_msg = f"Unable to get current user account ID: {e}"
@@ -326,32 +321,11 @@ class UsersMixin(JiraClient):
                 raise ValueError(f"User '{identifier}' not found or lookup failed.")
             return JiraUser.from_api_response(user_data)
         except HTTPError as http_err:
-            if http_err.response is not None:
-                response_text = http_err.response.text[:200]
-                status_code = http_err.response.status_code
-                if status_code == 404:
-                    raise ValueError(f"User '{identifier}' not found.") from http_err
-                elif status_code in [401, 403]:
-                    logger.error(
-                        f"Authentication/Permission error for '{identifier}': {status_code}"
-                    )
-                    raise MCPAtlassianAuthenticationError(
-                        f"Permission denied accessing user '{identifier}'."
-                    ) from http_err
-                else:
-                    logger.error(
-                        f"HTTP error {status_code} for '{identifier}': {http_err}. Response: {response_text}"
-                    )
-                    raise Exception(
-                        f"API error getting user profile for '{identifier}': {http_err}"
-                    ) from http_err
-            else:
-                logger.error(
-                    f"Network or unknown HTTP error (no response object) for '{identifier}': {http_err}"
-                )
-                raise Exception(
-                    f"Network error getting user profile for '{identifier}': {http_err}"
-                ) from http_err
+            raise_for_not_found(http_err, "user", identifier, "getting user profile")
+            raise_for_auth_error(http_err, f"getting user profile for '{identifier}'")
+            raise wrap_http_error(
+                http_err, f"getting user profile for '{identifier}'"
+            ) from http_err
         except Exception as e:
             logger.exception(
                 f"Unexpected error getting/processing user profile for '{identifier}':"

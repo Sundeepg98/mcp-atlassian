@@ -5,8 +5,8 @@ import logging
 import requests
 from requests.exceptions import HTTPError
 
-from ..exceptions import MCPAtlassianAuthenticationError
 from ..models.confluence import ConfluencePage
+from ..utils.errors import raise_for_auth_error, wrap_http_error
 from .client import ConfluenceClient
 from .utils import emoji_to_hex_id, extract_emoji_from_property
 from .v2_adapter import ConfluenceV2Adapter
@@ -103,19 +103,8 @@ class PagesMixin(ConfluenceClient):
                 emoji=emoji,
             )
         except HTTPError as http_err:
-            if http_err.response is not None and http_err.response.status_code in [
-                401,
-                403,
-            ]:
-                error_msg = (
-                    f"Authentication failed for Confluence API ({http_err.response.status_code}). "
-                    "Token may be expired or invalid. Please verify credentials."
-                )
-                logger.error(error_msg)
-                raise MCPAtlassianAuthenticationError(error_msg) from http_err
-            else:
-                logger.error(f"HTTP error during API call: {http_err}", exc_info=False)
-                raise http_err
+            raise_for_auth_error(http_err, f"retrieving page {page_id}")
+            raise wrap_http_error(http_err, f"retrieving page {page_id}") from http_err
         except Exception as e:
             logger.error(
                 f"Error retrieving page content for page ID {page_id}: {str(e)}"
@@ -153,19 +142,10 @@ class PagesMixin(ConfluenceClient):
 
             return ancestor_models
         except HTTPError as http_err:
-            if http_err.response is not None and http_err.response.status_code in [
-                401,
-                403,
-            ]:
-                error_msg = (
-                    f"Authentication failed for Confluence API ({http_err.response.status_code}). "
-                    "Token may be expired or invalid. Please verify credentials."
-                )
-                logger.error(error_msg)
-                raise MCPAtlassianAuthenticationError(error_msg) from http_err
-            else:
-                logger.error(f"HTTP error during API call: {http_err}", exc_info=False)
-                raise http_err
+            raise_for_auth_error(http_err, f"getting ancestors for page {page_id}")
+            raise wrap_http_error(
+                http_err, f"getting ancestors for page {page_id}"
+            ) from http_err
         except Exception as e:
             logger.error(f"Error fetching ancestors for page {page_id}: {str(e)}")
             logger.debug("Full exception details:", exc_info=True)

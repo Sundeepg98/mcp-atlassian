@@ -6,10 +6,10 @@ from typing import Any
 
 from requests.exceptions import HTTPError
 
-from ..exceptions import MCPAtlassianAuthenticationError
 from ..models.jira import JiraIssue
 from ..models.jira.common import JiraChangelog
 from ..utils import parse_date
+from ..utils.errors import raise_for_auth_error, wrap_http_error
 from .client import JiraClient
 from .constants import DEFAULT_READ_JIRA_FIELDS
 from .protocols import (
@@ -210,19 +210,8 @@ class IssuesMixin(
                 requested_fields=fields,
             )
         except HTTPError as http_err:
-            if http_err.response is not None and http_err.response.status_code in [
-                401,
-                403,
-            ]:
-                error_msg = (
-                    f"Authentication failed for Jira API ({http_err.response.status_code}). "
-                    "Token may be expired or invalid. Please verify credentials."
-                )
-                logger.error(error_msg)
-                raise MCPAtlassianAuthenticationError(error_msg) from http_err
-            else:
-                logger.error(f"HTTP error during API call: {http_err}", exc_info=False)
-                raise
+            raise_for_auth_error(http_err, f"retrieving issue {issue_key}")
+            raise wrap_http_error(http_err, f"retrieving issue {issue_key}") from http_err
         except Exception as e:
             error_msg = str(e)
             logger.error(f"Error retrieving issue {issue_key}: {error_msg}")
