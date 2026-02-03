@@ -9,6 +9,7 @@ from requests.exceptions import HTTPError
 from ..exceptions import MCPAtlassianAPIError
 from ..models.jira import JiraSearchResult
 from ..utils.errors import raise_for_auth_error, wrap_http_error
+from ..utils.validation import ensure_dict_response
 from .client import JiraClient
 from .constants import DEFAULT_READ_JIRA_FIELDS
 from .protocols import IssueOperationsProto
@@ -116,11 +117,7 @@ class SearchMixin(JiraClient, IssueOperationsProto):
                     response = self.jira.post(
                         "rest/api/3/search/jql", json=request_body
                     )
-
-                    if not isinstance(response, dict):
-                        msg = f"Unexpected response type from v3 search API: {type(response)}"
-                        logger.error(msg)
-                        raise TypeError(msg)
+                    response = ensure_dict_response(response, "v3 search API")
 
                     issues = response.get("issues", [])
                     all_issues.extend(issues)
@@ -151,10 +148,7 @@ class SearchMixin(JiraClient, IssueOperationsProto):
                 response = self.jira.jql(
                     jql, fields=fields_param, start=start, limit=limit, expand=expand
                 )
-                if not isinstance(response, dict):
-                    msg = f"Unexpected return value type from `jira.jql`: {type(response)}"
-                    logger.error(msg)
-                    raise TypeError(msg)
+                response = ensure_dict_response(response, "jira.jql")
 
                 # Convert the response to a search result model
                 search_result = JiraSearchResult.from_api_response(
@@ -212,10 +206,7 @@ class SearchMixin(JiraClient, IssueOperationsProto):
                 limit=limit,
                 expand=expand,
             )
-            if not isinstance(response, dict):
-                msg = f"Unexpected return value type from `jira.get_issues_for_board`: {type(response)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            response = ensure_dict_response(response, "jira.get_issues_for_board")
 
             # Convert the response to a search result model
             search_result = JiraSearchResult.from_api_response(
@@ -264,10 +255,7 @@ class SearchMixin(JiraClient, IssueOperationsProto):
                 start=start,
                 limit=limit,
             )
-            if not isinstance(response, dict):
-                msg = f"Unexpected return value type from `jira.get_sprint_issues`: {type(response)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            response = ensure_dict_response(response, "jira.get_sprint_issues")
 
             # Convert the response to a search result model
             search_result = JiraSearchResult.from_api_response(

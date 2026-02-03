@@ -8,6 +8,7 @@ from requests.exceptions import HTTPError
 from ..exceptions import MCPAtlassianAPIError
 from ..models.jira import JiraIssueLinkType
 from ..utils.errors import raise_for_auth_error, wrap_http_error
+from ..utils.validation import ensure_dict_response
 from .client import JiraClient
 
 logger = logging.getLogger(__name__)
@@ -30,10 +31,9 @@ class LinksMixin(JiraClient):
         """
         try:
             link_types_response = self.jira.get("rest/api/2/issueLinkType")
-            if not isinstance(link_types_response, dict):
-                msg = f"Unexpected return value type from `jira.get`: {type(link_types_response)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            link_types_response = ensure_dict_response(
+                link_types_response, "jira.get(issueLinkType)"
+            )
 
             link_types_data = link_types_response.get("issueLinkTypes", [])
 

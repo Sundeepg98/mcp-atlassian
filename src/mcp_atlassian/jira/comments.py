@@ -5,6 +5,8 @@ from typing import Any
 
 from ..exceptions import MCPAtlassianAPIError
 from ..utils import parse_date
+from ..utils.dict_utils import get_nested_str
+from ..utils.validation import ensure_dict_response
 from .client import JiraClient
 
 logger = logging.getLogger(__name__)
@@ -31,11 +33,7 @@ class CommentsMixin(JiraClient):
         """
         try:
             comments = self.jira.issue_get_comments(issue_key)
-
-            if not isinstance(comments, dict):
-                msg = f"Unexpected return value type from `jira.issue_get_comments`: {type(comments)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            comments = ensure_dict_response(comments, "jira.issue_get_comments")
 
             processed_comments = []
             for comment in comments.get("comments", [])[:limit]:
@@ -44,7 +42,7 @@ class CommentsMixin(JiraClient):
                     "body": self._clean_text(comment.get("body", "")),
                     "created": str(parse_date(comment.get("created"))),
                     "updated": str(parse_date(comment.get("updated"))),
-                    "author": comment.get("author", {}).get("displayName", "Unknown"),
+                    "author": get_nested_str(comment, "author", "displayName", default="Unknown"),
                 }
                 processed_comments.append(processed_comment)
 
@@ -78,16 +76,13 @@ class CommentsMixin(JiraClient):
             result = self.jira.issue_add_comment(
                 issue_key, jira_formatted_comment, visibility
             )
-            if not isinstance(result, dict):
-                msg = f"Unexpected return value type from `jira.issue_add_comment`: {type(result)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            result = ensure_dict_response(result, "jira.issue_add_comment")
 
             return {
                 "id": result.get("id"),
                 "body": self._clean_text(result.get("body", "")),
                 "created": str(parse_date(result.get("created"))),
-                "author": result.get("author", {}).get("displayName", "Unknown"),
+                "author": get_nested_str(result, "author", "displayName", default="Unknown"),
             }
         except Exception as e:
             msg = f"Error adding comment to issue {issue_key}: {e}"
@@ -123,16 +118,13 @@ class CommentsMixin(JiraClient):
             result = self.jira.issue_edit_comment(
                 issue_key, comment_id, jira_formatted_comment, visibility
             )
-            if not isinstance(result, dict):
-                msg = f"Unexpected return value type from `jira.issue_edit_comment`: {type(result)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            result = ensure_dict_response(result, "jira.issue_edit_comment")
 
             return {
                 "id": result.get("id"),
                 "body": self._clean_text(result.get("body", "")),
                 "updated": str(parse_date(result.get("updated"))),
-                "author": result.get("author", {}).get("displayName", "Unknown"),
+                "author": get_nested_str(result, "author", "displayName", default="Unknown"),
             }
         except Exception as e:
             msg = f"Error editing comment {comment_id} on issue {issue_key}: {e}"

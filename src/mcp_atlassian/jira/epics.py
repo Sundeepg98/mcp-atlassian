@@ -5,6 +5,8 @@ from typing import Any
 
 from ..exceptions import MCPAtlassianAPIError
 from ..models.jira import JiraIssue
+from ..utils.dict_utils import get_nested_str
+from ..utils.validation import ensure_dict_response, ensure_list_response
 from .client import JiraClient
 from .protocols import (
     FieldsOperationsProto,
@@ -46,10 +48,7 @@ class EpicsMixin(
             # Find an Epic in the system
             epics_jql = "issuetype = Epic ORDER BY created DESC"
             results = self.jira.jql(epics_jql, fields="*all", limit=1)
-            if not isinstance(results, dict):
-                msg = f"Unexpected return value type from `jira.jql`: {type(results)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            results = ensure_dict_response(results, "jira.jql")
 
             # If no epics found, we can't use this method
             if not results or not results.get("issues"):
@@ -310,22 +309,12 @@ class EpicsMixin(
             # Verify that both issue and epic exist
             issue = self.jira.get_issue(issue_key)
             epic = self.jira.get_issue(epic_key)
-            if not isinstance(issue, dict):
-                msg = (
-                    f"Unexpected return value type from `jira.get_issue`: {type(issue)}"
-                )
-                logger.error(msg)
-                raise TypeError(msg)
-            if not isinstance(epic, dict):
-                msg = (
-                    f"Unexpected return value type from `jira.get_issue`: {type(epic)}"
-                )
-                logger.error(msg)
-                raise TypeError(msg)
+            issue = ensure_dict_response(issue, "jira.get_issue")
+            epic = ensure_dict_response(epic, "jira.get_issue")
 
             # Check if the epic key corresponds to an actual epic
             fields = epic.get("fields", {})
-            issue_type = fields.get("issuetype", {}).get("name", "").lower()
+            issue_type = get_nested_str(fields, "issuetype", "name").lower()
 
             if issue_type != "epic":
                 error_msg = f"Error linking issue to epic: {epic_key} is not an Epic"
@@ -453,17 +442,11 @@ class EpicsMixin(
         try:
             # First, check if the issue is an Epic
             epic = self.jira.get_issue(epic_key)
-            if not isinstance(epic, dict):
-                msg = (
-                    f"Unexpected return value type from `jira.get_issue`: {type(epic)}"
-                )
-                logger.error(msg)
-                raise TypeError(msg)
+            epic = ensure_dict_response(epic, "jira.get_issue")
             fields_data = epic.get("fields", {})
 
             # Check if the issue is an Epic
-            issuetype_data = fields_data.get("issuetype", {})
-            issue_type_name = issuetype_data.get("name", "")
+            issue_type_name = get_nested_str(fields_data, "issuetype", "name")
 
             # Check if it's an Epic by looking for "epic" in the name (case-insensitive)
             # This handles localized names like "에픽", "エピック", etc.
@@ -748,10 +731,7 @@ class EpicsMixin(
         # and has "epic" in its schema name or description
         try:
             all_fields = self.jira.get_all_fields()
-            if not isinstance(all_fields, list):
-                msg = f"Unexpected return value type from `jira.get_all_fields`: {type(all_fields)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            all_fields = ensure_list_response(all_fields, "jira.get_all_fields")
 
             for field in all_fields:
                 field_id = field.get("id", "")
@@ -786,10 +766,7 @@ class EpicsMixin(
             # Search for issues with type=Epic
             jql = "issuetype = Epic ORDER BY updated DESC"
             response = self.jira.jql(jql, limit=1)
-            if not isinstance(response, dict):
-                msg = f"Unexpected return value type from `jira.jql`: {type(response)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            response = ensure_dict_response(response, "jira.jql")
 
             if response and "issues" in response and response["issues"]:
                 return response["issues"]
@@ -817,10 +794,7 @@ class EpicsMixin(
             ]:
                 try:
                     response = self.jira.jql(query, limit=5)
-                    if not isinstance(response, dict):
-                        msg = f"Unexpected return value type from `jira.jql`: {type(response)}"
-                        logger.error(msg)
-                        raise TypeError(msg)
+                    response = ensure_dict_response(response, "jira.jql")
                     if response.get("issues"):
                         return response["issues"]
                 except Exception:

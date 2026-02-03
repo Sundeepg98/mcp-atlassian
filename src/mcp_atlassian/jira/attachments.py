@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from ..models.jira import JiraAttachment
+from ..utils.dict_utils import get_nested
+from ..utils.validation import ensure_dict_response
 from .client import JiraClient
 from .protocols import AttachmentsOperationsProto
 
@@ -94,10 +96,7 @@ class AttachmentsMixin(JiraClient, AttachmentsOperationsProto):
         logger.info(f"Fetching issue {issue_key} with attachments")
         issue_data = self.jira.issue(issue_key, fields="attachment")
 
-        if not isinstance(issue_data, dict):
-            msg = f"Unexpected return value type from `jira.issue`: {type(issue_data)}"
-            logger.error(msg)
-            raise TypeError(msg)
+        issue_data = ensure_dict_response(issue_data, "jira.issue")
 
         if "fields" not in issue_data:
             logger.error(f"Could not retrieve issue {issue_key}")
@@ -108,7 +107,7 @@ class AttachmentsMixin(JiraClient, AttachmentsOperationsProto):
         results = []
 
         # Extract attachments from the API response
-        attachment_data = issue_data.get("fields", {}).get("attachment", [])
+        attachment_data = get_nested(issue_data, "fields", "attachment", default=[])
 
         if not attachment_data:
             return {

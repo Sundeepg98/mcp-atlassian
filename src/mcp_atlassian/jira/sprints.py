@@ -8,6 +8,7 @@ import requests
 
 from ..models.jira import JiraSprint
 from ..utils import parse_date
+from ..utils.validation import ensure_dict_response
 from .client import JiraClient
 
 logger = logging.getLogger(__name__)
@@ -117,10 +118,9 @@ class SprintsMixin(JiraClient):
                 data=data,
             )
 
-            if not isinstance(updated_sprint, dict):
-                msg = f"Unexpected return value type from `SprintMixin.update_sprint`: {type(updated_sprint)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            updated_sprint = ensure_dict_response(
+                updated_sprint, "SprintMixin.update_sprint"
+            )
 
             return JiraSprint.from_api_response(updated_sprint)
         except requests.HTTPError as e:
@@ -182,10 +182,7 @@ class SprintsMixin(JiraClient):
 
             logger.info(f"Sprint created: {sprint}")
 
-            if not isinstance(sprint, dict):
-                msg = f"Unexpected return value type from `SprintMixin.create_sprint`: {type(sprint)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            sprint = ensure_dict_response(sprint, "SprintMixin.create_sprint")
 
             return JiraSprint.from_api_response(sprint)
 

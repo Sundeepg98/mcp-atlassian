@@ -322,7 +322,7 @@ class TestAttachmentsMixin:
 
         with pytest.raises(
             TypeError,
-            match="Unexpected return value type from `jira.issue`: <class 'NoneType'>",
+            match=r"Unexpected response type from `jira\.issue`: expected dict, got NoneType",
         ):
             attachments_mixin.download_issue_attachments("TEST-123", "/tmp/attachments")
 

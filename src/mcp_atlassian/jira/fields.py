@@ -5,6 +5,8 @@ from typing import Any
 
 from thefuzz import fuzz
 
+from ..utils.dict_utils import get_nested_str
+from ..utils.validation import ensure_list_response
 from .client import JiraClient
 from .protocols import EpicOperationsProto, UsersOperationsProto
 
@@ -43,10 +45,7 @@ class FieldsMixin(JiraClient, EpicOperationsProto, UsersOperationsProto):
 
             # Fetch fields from Jira API
             fields = self.jira.get_all_fields()
-            if not isinstance(fields, list):
-                msg = f"Unexpected return value type from `jira.get_all_fields`: {type(fields)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            fields = ensure_list_response(fields, "jira.get_all_fields")
 
             # Cache the fields
             self._field_ids_cache = fields
@@ -405,7 +404,7 @@ class FieldsMixin(JiraClient, EpicOperationsProto, UsersOperationsProto):
         for field in fields:
             field_id = field.get("id", "")
             name = field.get("name", "")
-            field_type = field.get("schema", {}).get("type", "")
+            field_type = get_nested_str(field, "schema", "type")
             logger.debug(f"{field_id}: {name} ({field_type})")
 
     def is_custom_field(self, field_id: str) -> bool:

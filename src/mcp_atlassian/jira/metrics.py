@@ -13,6 +13,7 @@ from ..models.jira.metrics import (
     StatusTimeSummary,
 )
 from ..utils import parse_date
+from ..utils.validation import ensure_dict_response
 from .client import JiraClient
 from .protocols import IssueOperationsProto
 
@@ -76,8 +77,7 @@ class MetricsMixin(JiraClient, IssueOperationsProto):
 
             if not issue:
                 raise ValueError(f"Issue {issue_key} not found")
-            if not isinstance(issue, dict):
-                raise TypeError(f"Unexpected return type: {type(issue)}")
+            issue = ensure_dict_response(issue, "jira.get_issue")
 
             fields = issue.get("fields", {}) or {}
 

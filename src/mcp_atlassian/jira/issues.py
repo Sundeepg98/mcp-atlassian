@@ -10,7 +10,9 @@ from ..exceptions import MCPAtlassianAPIError
 from ..models.jira import JiraIssue
 from ..models.jira.common import JiraChangelog
 from ..utils import parse_date
+from ..utils.dict_utils import get_nested_str
 from ..utils.errors import raise_for_auth_error, wrap_http_error
+from ..utils.validation import ensure_dict_response
 from .client import JiraClient
 from .constants import DEFAULT_READ_JIRA_FIELDS
 from .protocols import (
@@ -152,12 +154,7 @@ class IssuesMixin(
             if not issue:
                 msg = f"Issue {issue_key} not found"
                 raise ValueError(msg)
-            if not isinstance(issue, dict):
-                msg = (
-                    f"Unexpected return value type from `jira.get_issue`: {type(issue)}"
-                )
-                logger.error(msg)
-                raise TypeError(msg)
+            ensure_dict_response(issue, "jira.get_issue")
 
             # Extract fields data, safely handling None
             fields_data = issue.get("fields", {}) or {}
@@ -260,10 +257,7 @@ class IssuesMixin(
         if comment_limit is None or comment_limit > 0:
             try:
                 response = self.jira.issue_get_comments(issue_key)
-                if not isinstance(response, dict):
-                    msg = f"Unexpected return value type from `jira.issue_get_comments`: {type(response)}"
-                    logger.error(msg)
-                    raise TypeError(msg)
+                response = ensure_dict_response(response, "jira.issue_get_comments")
 
                 comments = response["comments"]
 
@@ -297,7 +291,7 @@ class IssuesMixin(
 
         try:
             fields = issue.get("fields", {}) or {}
-            issue_type = fields.get("issuetype", {}).get("name", "").lower()
+            issue_type = get_nested_str(fields, "issuetype", "name").lower()
 
             # Get field IDs for epic fields
             try:
@@ -331,10 +325,7 @@ class IssuesMixin(
                             properties=None,
                             update_history=True,
                         )
-                        if not isinstance(epic, dict):
-                            msg = f"Unexpected return value type from `jira.get_issue`: {type(epic)}"
-                            logger.error(msg)
-                            raise TypeError(msg)
+                        epic = ensure_dict_response(epic, "jira.get_issue")
 
                         epic_fields = epic.get("fields", {}) or {}
 
@@ -381,8 +372,8 @@ class IssuesMixin(
 
         # Basic issue information
         summary = fields.get("summary", "")
-        status = fields.get("status", {}).get("name", "")
-        issue_type = fields.get("issuetype", {}).get("name", "")
+        status = get_nested_str(fields, "status", "name")
+        issue_type = get_nested_str(fields, "issuetype", "name")
 
         # Format content
         content = [f"# {issue_key}: {summary}"]
@@ -462,8 +453,8 @@ class IssuesMixin(
         metadata = {
             "key": issue_key,
             "title": fields.get("summary", ""),
-            "status": fields.get("status", {}).get("name", ""),
-            "type": fields.get("issuetype", {}).get("name", ""),
+            "status": get_nested_str(fields, "status", "name"),
+            "type": get_nested_str(fields, "issuetype", "name"),
             "created": created_date,
             "url": f"{self.config.url}/browse/{issue_key}",
         }
@@ -600,10 +591,7 @@ class IssuesMixin(
 
             # Create the issue
             response = self.jira.create_issue(fields=fields)
-            if not isinstance(response, dict):
-                msg = f"Unexpected return value type from `jira.create_issue`: {type(response)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            response = ensure_dict_response(response, "jira.create_issue")
 
             # Get the created issue key
             issue_key = response.get("key")
@@ -631,10 +619,7 @@ class IssuesMixin(
 
             # Get the full issue data and convert to JiraIssue model
             issue_data = self.jira.get_issue(issue_key)
-            if not isinstance(issue_data, dict):
-                msg = f"Unexpected return value type from `jira.get_issue`: {type(issue_data)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            issue_data = ensure_dict_response(issue_data, "jira.get_issue")
             return JiraIssue.from_api_response(issue_data)
 
         except Exception as e:
@@ -1066,10 +1051,7 @@ class IssuesMixin(
 
             # Get the updated issue data and convert to JiraIssue model
             issue_data = self.jira.get_issue(issue_key)
-            if not isinstance(issue_data, dict):
-                msg = f"Unexpected return value type from `jira.get_issue`: {type(issue_data)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            issue_data = ensure_dict_response(issue_data, "jira.get_issue")
             issue = JiraIssue.from_api_response(issue_data)
 
             # Add attachment results to the response if available
@@ -1109,10 +1091,7 @@ class IssuesMixin(
         # If no status change is requested, return the issue
         if not status:
             issue_data = self.jira.get_issue(issue_key)
-            if not isinstance(issue_data, dict):
-                msg = f"Unexpected return value type from `jira.get_issue`: {type(issue_data)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            issue_data = ensure_dict_response(issue_data, "jira.get_issue")
             return JiraIssue.from_api_response(issue_data)
 
         # Get available transitions (uses TransitionsMixin's normalized implementation)
@@ -1208,10 +1187,7 @@ class IssuesMixin(
 
         # Get the updated issue data
         issue_data = self.jira.get_issue(issue_key)
-        if not isinstance(issue_data, dict):
-            msg = f"Unexpected return value type from `jira.get_issue`: {type(issue_data)}"
-            logger.error(msg)
-            raise TypeError(msg)
+        issue_data = ensure_dict_response(issue_data, "jira.get_issue")
         return JiraIssue.from_api_response(issue_data)
 
     def delete_issue(self, issue_key: str) -> bool:
@@ -1244,9 +1220,8 @@ class IssuesMixin(
         """
         logger.debug("Available Jira fields:")
         for field in fields:
-            logger.debug(
-                f"{field.get('id')}: {field.get('name')} ({field.get('schema', {}).get('type')})"
-            )
+            schema_type = get_nested_str(field, "schema", "type")
+            logger.debug(f"{field.get('id')}: {field.get('name')} ({schema_type})")
 
     def _process_field_for_epic_data(
         self, field: dict, field_ids: dict[str, str]
@@ -1430,10 +1405,7 @@ class IssuesMixin(
         try:
             # Call Jira's bulk create endpoint
             response = self.jira.create_issues(issue_updates)
-            if not isinstance(response, dict):
-                msg = f"Unexpected return value type from `jira.create_issues`: {type(response)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            response = ensure_dict_response(response, "jira.create_issues")
 
             # Process results
             created_issues = []
@@ -1443,10 +1415,9 @@ class IssuesMixin(
                     try:
                         # Fetch the full issue data
                         issue_data = self.jira.get_issue(issue_key)
-                        if not isinstance(issue_data, dict):
-                            msg = f"Unexpected return value type from `jira.get_issue`: {type(issue_data)}"
-                            logger.error(msg)
-                            raise TypeError(msg)
+                        issue_data = ensure_dict_response(
+                            issue_data, "jira.get_issue"
+                        )
 
                         created_issues.append(
                             JiraIssue.from_api_response(

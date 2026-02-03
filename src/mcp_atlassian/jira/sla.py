@@ -5,6 +5,7 @@ from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from ..models.jira.metrics import IssueDatesResponse
+from ..utils.dict_utils import get_nested_str
 from ..models.jira.sla import (
     CycleTimeMetric,
     DueDateComplianceMetric,
@@ -479,7 +480,7 @@ class SLAMixin(JiraClient, MetricsOperationsProto):
                 statuses = self.jira.get_all_statuses()
                 for status in statuses:
                     name = status.get("name", "").lower()
-                    category_key = status.get("statusCategory", {}).get("key", "")
+                    category_key = get_nested_str(status, "statusCategory", "key")
                     if name:
                         self._status_category_cache[name] = category_key
             except Exception as e:

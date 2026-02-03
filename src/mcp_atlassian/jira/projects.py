@@ -6,6 +6,7 @@ from typing import Any
 from ..models import JiraProject
 from ..models.jira.search import JiraSearchResult
 from ..models.jira.version import JiraVersion
+from ..utils.validation import ensure_dict_response
 from .client import JiraClient
 from .protocols import SearchOperationsProto
 
@@ -53,10 +54,7 @@ class ProjectsMixin(JiraClient, SearchOperationsProto):
         """
         try:
             project_data = self.jira.project(project_key)
-            if not isinstance(project_data, dict):
-                msg = f"Unexpected return value type from `jira.project`: {type(project_data)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            project_data = ensure_dict_response(project_data, "jira.project")
             return project_data
         except Exception as e:
             logger.warning(f"Error getting project {project_key}: {e}")
@@ -199,10 +197,9 @@ class ProjectsMixin(JiraClient, SearchOperationsProto):
             scheme = self.jira.get_project_permission_scheme(
                 project_id_or_key=project_key
             )
-            if not isinstance(scheme, dict):
-                msg = f"Unexpected return value type from `jira.get_project_permission_scheme`: {type(scheme)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            scheme = ensure_dict_response(
+                scheme, "jira.get_project_permission_scheme"
+            )
             return scheme
 
         except Exception as e:
@@ -227,10 +224,9 @@ class ProjectsMixin(JiraClient, SearchOperationsProto):
             scheme = self.jira.get_project_notification_scheme(
                 project_id_or_key=project_key
             )
-            if not isinstance(scheme, dict):
-                msg = f"Unexpected return value type from `jira.get_project_notification_scheme`: {type(scheme)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            scheme = ensure_dict_response(
+                scheme, "jira.get_project_notification_scheme"
+            )
             return scheme
 
         except Exception as e:
@@ -251,10 +247,7 @@ class ProjectsMixin(JiraClient, SearchOperationsProto):
         """
         try:
             meta = self.jira.issue_createmeta_issuetypes(project=project_key)
-            if not isinstance(meta, dict):
-                msg = f"Unexpected return value type from `jira.issue_createmeta_issuetypes`: {type(meta)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            meta = ensure_dict_response(meta, "jira.issue_createmeta_issuetypes")
 
             issue_types = []
             # Extract issue types from createmeta response
@@ -285,10 +278,7 @@ class ProjectsMixin(JiraClient, SearchOperationsProto):
             # Use JQL to count issues in the project
             jql = f'project = "{project_key}"'
             result = self.jira.jql(jql=jql, fields="key", limit=1)
-            if not isinstance(result, dict):
-                msg = f"Unexpected return value type from `jira.jql`: {type(result)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            result = ensure_dict_response(result, "jira.jql")
 
             # Extract total from the response
             total = 0

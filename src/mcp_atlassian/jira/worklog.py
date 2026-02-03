@@ -7,6 +7,8 @@ from typing import Any
 from ..exceptions import MCPAtlassianAPIError
 from ..models import JiraWorklog
 from ..utils import parse_date
+from ..utils.dict_utils import get_nested_str
+from ..utils.validation import ensure_dict_response
 from .client import JiraClient
 
 logger = logging.getLogger(__name__)
@@ -133,10 +135,7 @@ class WorklogMixin(JiraClient):
             url = f"{base_url}/{issue_key}/worklog"
 
             result = self.jira.post(url, data=worklog_data, params=params)
-            if not isinstance(result, dict):
-                msg = f"Unexpected return value type from `jira.post`: {type(result)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            result = ensure_dict_response(result, "jira.post")
 
             # Format and return the result
             return {
@@ -147,7 +146,7 @@ class WorklogMixin(JiraClient):
                 "started": str(parse_date(result.get("started", ""))),
                 "timeSpent": result.get("timeSpent", ""),
                 "timeSpentSeconds": result.get("timeSpentSeconds", 0),
-                "author": result.get("author", {}).get("displayName", "Unknown"),
+                "author": get_nested_str(result, "author", "displayName", default="Unknown"),
                 "original_estimate_updated": original_estimate_updated,
                 "remaining_estimate_updated": remaining_estimate_updated,
             }
@@ -207,10 +206,7 @@ class WorklogMixin(JiraClient):
         """
         try:
             result = self.jira.issue_get_worklog(issue_key)
-            if not isinstance(result, dict):
-                msg = f"Unexpected return value type from `jira.issue_get_worklog`: {type(result)}"
-                logger.error(msg)
-                raise TypeError(msg)
+            result = ensure_dict_response(result, "jira.issue_get_worklog")
 
             # Process the worklogs
             worklogs = []
@@ -224,8 +220,8 @@ class WorklogMixin(JiraClient):
                         "started": str(parse_date(worklog.get("started", ""))),
                         "timeSpent": worklog.get("timeSpent", ""),
                         "timeSpentSeconds": worklog.get("timeSpentSeconds", 0),
-                        "author": worklog.get("author", {}).get(
-                            "displayName", "Unknown"
+                        "author": get_nested_str(
+                            worklog, "author", "displayName", default="Unknown"
                         ),
                     }
                 )

@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 from ..preprocessing.jira import JiraPreprocessor
+from ..utils.dict_utils import get_nested_str
 from .client import JiraClient
 from .protocols import (
     EpicOperationsProto,
@@ -155,8 +156,8 @@ Description:
         metadata = {
             "key": issue_key,
             "summary": fields.get("summary", ""),
-            "type": fields.get("issuetype", {}).get("name", ""),
-            "status": fields.get("status", {}).get("name", ""),
+            "type": get_nested_str(fields, "issuetype", "name"),
+            "status": get_nested_str(fields, "status", "name"),
             "created": created_date,
             "source": "jira",
         }
