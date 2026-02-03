@@ -4,6 +4,8 @@ This module provides Pydantic models for common Confluence entities like users
 and attachments.
 """
 
+__all__ = ["ConfluenceUser", "ConfluenceAttachment"]
+
 import logging
 import warnings
 from typing import Any
@@ -33,10 +35,12 @@ class ConfluenceUser(ApiModel):
         """
         Alias for display_name to maintain compatibility with tests.
 
-        Deprecated: Use display_name instead.
+        .. deprecated:: 0.12.0
+            Use :attr:`display_name` instead. Will be removed in v1.0.0.
         """
         warnings.warn(
-            "The 'name' property is deprecated. Use 'display_name' instead.",
+            "The 'name' property is deprecated and will be removed in v1.0.0. "
+            "Use 'display_name' instead.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -53,8 +57,8 @@ class ConfluenceUser(ApiModel):
         Returns:
             A ConfluenceUser instance
         """
-        if not data:
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         profile_pic = None
         if pic_data := data.get("profilePicture"):
@@ -104,8 +108,8 @@ class ConfluenceAttachment(ApiModel):
         Returns:
             A ConfluenceAttachment instance
         """
-        if not data:
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         return cls(
             id=data.get("id"),

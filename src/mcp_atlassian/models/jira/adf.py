@@ -4,6 +4,8 @@ Atlassian Document Format (ADF) utilities.
 This module provides utilities for parsing ADF content from Jira Cloud.
 """
 
+__all__ = ["adf_to_text"]
+
 from datetime import datetime, timezone
 
 

@@ -5,13 +5,26 @@ This module provides Pydantic models for common Jira entities like users, status
 issue types, priorities, attachments, and time tracking.
 """
 
+__all__ = [
+    "JiraUser",
+    "JiraStatusCategory",
+    "JiraStatus",
+    "JiraIssueType",
+    "JiraPriority",
+    "JiraAttachment",
+    "JiraTimetracking",
+    "JiraResolution",
+    "JiraChangelogItem",
+    "JiraChangelog",
+]
+
 import logging
 from datetime import datetime
 from typing import Any
 
 from pydantic import Field, field_serializer
 
-from mcp_atlassian.utils import parse_date
+from mcp_atlassian.utils import parse_date, safe_int_or_none
 
 from ..base import ApiModel, TimestampMixin
 from ..constants import (
@@ -48,13 +61,8 @@ class JiraUser(ApiModel):
         Returns:
             A JiraUser instance
         """
-        if not data:
-            return cls()
-
-        # Handle non-dictionary data by returning a default instance
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         avatar_url = None
         if avatars := data.get("avatarUrls"):
@@ -106,13 +114,8 @@ class JiraStatusCategory(ApiModel):
         Returns:
             A JiraStatusCategory instance
         """
-        if not data:
-            return cls()
-
-        # Handle non-dictionary data by returning a default instance
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Safely get and convert fields, handling potential type mismatches
         id_value = data.get("id", 0)
@@ -152,13 +155,8 @@ class JiraStatus(ApiModel):
         Returns:
             A JiraStatus instance
         """
-        if not data:
-            return cls()
-
-        # Handle non-dictionary data by returning a default instance
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         category = None
         category_data = data.get("statusCategory")
@@ -212,12 +210,8 @@ class JiraIssueType(ApiModel):
         Returns:
             A JiraIssueType instance
         """
-        if not data:
-            return cls()
-
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         issue_type_id = data.get("id", JIRA_DEFAULT_ID)
         if issue_type_id is not None:
@@ -256,12 +250,8 @@ class JiraPriority(ApiModel):
         Returns:
             A JiraPriority instance
         """
-        if not data:
-            return cls()
-
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         priority_id = data.get("id", JIRA_DEFAULT_ID)
         if priority_id is not None:
@@ -307,12 +297,8 @@ class JiraAttachment(ApiModel):
         Returns:
             A JiraAttachment instance
         """
-        if not data:
-            return cls()
-
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         author = None
         author_data = data.get("author")
@@ -391,19 +377,16 @@ class JiraTimetracking(ApiModel):
         Returns:
             A JiraTimetracking instance
         """
-        if not data:
-            return cls()
-
-        if not isinstance(data, dict):
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         return cls(
             original_estimate=data.get("originalEstimate"),
             remaining_estimate=data.get("remainingEstimate"),
             time_spent=data.get("timeSpent"),
-            original_estimate_seconds=data.get("originalEstimateSeconds"),
-            remaining_estimate_seconds=data.get("remainingEstimateSeconds"),
-            time_spent_seconds=data.get("timeSpentSeconds"),
+            original_estimate_seconds=safe_int_or_none(data.get("originalEstimateSeconds")),
+            remaining_estimate_seconds=safe_int_or_none(data.get("remainingEstimateSeconds")),
+            time_spent_seconds=safe_int_or_none(data.get("timeSpentSeconds")),
         )
 
     def to_simplified_dict(self) -> dict[str, str | int | None]:
@@ -430,12 +413,12 @@ class JiraResolution(ApiModel):
     @classmethod
     def from_api_response(cls, data: dict[str, Any], **kwargs: Any) -> "JiraResolution":
         """Create a JiraResolution from a Jira API response."""
-        if not isinstance(data, dict):
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
         resolution_id = data.get("id", JIRA_DEFAULT_ID)
         return cls(
             id=str(resolution_id),
-            name=data.get("name", UNKNOWN),
+            name=str(data.get("name", UNKNOWN)),
             description=data.get("description"),
         )
 
@@ -472,8 +455,8 @@ class JiraChangelogItem(ApiModel):
         Returns:
             A JiraChangeItem instance
         """
-        if not data or not isinstance(data, dict):
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         return cls(
             field=str(data.get("field", EMPTY_STRING)),
@@ -534,13 +517,8 @@ class JiraChangelog(ApiModel, TimestampMixin):
         Returns:
             A JiraChangelog instance
         """
-        if not data:
-            return cls()
-
-        # Handle non-dictionary data by returning a default instance
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Extract author data
         author = None

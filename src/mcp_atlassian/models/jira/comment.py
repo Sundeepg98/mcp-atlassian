@@ -4,6 +4,8 @@ Jira comment models.
 This module provides Pydantic models for Jira comments.
 """
 
+__all__ = ["JiraComment"]
+
 import logging
 from typing import Any
 
@@ -40,13 +42,8 @@ class JiraComment(ApiModel, TimestampMixin):
         Returns:
             A JiraComment instance
         """
-        if not data:
-            return cls()
-
-        # Handle non-dictionary data by returning a default instance
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Extract author data
         author = None

@@ -4,10 +4,14 @@ Jira search result models.
 This module provides Pydantic models for Jira search (JQL) results.
 """
 
+__all__ = ["JiraSearchResult"]
+
 import logging
 from typing import Any
 
 from pydantic import Field, model_validator
+
+from mcp_atlassian.utils import safe_int
 
 from ..base import ApiModel
 from .issue import JiraIssue
@@ -39,12 +43,8 @@ class JiraSearchResult(ApiModel):
         Returns:
             A JiraSearchResult instance
         """
-        if not data:
-            return cls()
-
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         issues = []
         issues_data = data.get("issues", [])
@@ -58,29 +58,10 @@ class JiraSearchResult(ApiModel):
                         )
                     )
 
-        raw_total = data.get("total")
-        raw_start_at = data.get("startAt")
-        raw_max_results = data.get("maxResults")
-
-        try:
-            total = int(raw_total) if raw_total is not None else -1
-        except (ValueError, TypeError):
-            total = -1
-
-        try:
-            start_at = int(raw_start_at) if raw_start_at is not None else -1
-        except (ValueError, TypeError):
-            start_at = -1
-
-        try:
-            max_results = int(raw_max_results) if raw_max_results is not None else -1
-        except (ValueError, TypeError):
-            max_results = -1
-
         return cls(
-            total=total,
-            start_at=start_at,
-            max_results=max_results,
+            total=safe_int(data.get("total"), -1),
+            start_at=safe_int(data.get("startAt"), -1),
+            max_results=safe_int(data.get("maxResults"), -1),
             issues=issues,
         )
 
@@ -95,6 +76,14 @@ class JiraSearchResult(ApiModel):
         Returns:
             The validated JiraSearchResult instance
         """
+        # Ensure non-negative pagination values
+        if self.start_at < 0:
+            self.start_at = 0
+        if self.max_results < 0:
+            self.max_results = 0
+        # Note: total can be -1 for v3 cloud API which doesn't provide counts
+        if self.total < -1:
+            self.total = -1
         return self
 
     def to_simplified_dict(self) -> dict[str, Any]:

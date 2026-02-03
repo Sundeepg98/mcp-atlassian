@@ -3,6 +3,8 @@ Confluence user search result models.
 This module provides Pydantic models for Confluence user search results.
 """
 
+__all__ = ["ConfluenceUserSearchResult", "ConfluenceUserSearchResults"]
+
 import logging
 from typing import Any
 
@@ -41,8 +43,8 @@ class ConfluenceUserSearchResult(ApiModel):
         Returns:
             A ConfluenceUserSearchResult instance
         """
-        if not data:
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Extract user data from the result
         user_data = data.get("user", {})
@@ -113,8 +115,8 @@ class ConfluenceUserSearchResults(ApiModel, TimestampMixin):
         Returns:
             A ConfluenceUserSearchResults instance
         """
-        if not data:
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Convert search results to ConfluenceUserSearchResult models
         results = []

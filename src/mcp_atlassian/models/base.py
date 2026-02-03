@@ -6,12 +6,17 @@ Jira and Confluence models to ensure consistent behavior and reduce
 code duplication.
 """
 
+__all__ = ["ApiModel", "TimestampMixin"]
+
+import logging
 from datetime import datetime
 from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
 from .constants import EMPTY_STRING
+
+logger = logging.getLogger("mcp-atlassian")
 
 # Type variable for the return type of from_api_response
 T = TypeVar("T", bound="ApiModel")
@@ -25,6 +30,36 @@ class ApiModel(BaseModel):
     to models and for converting models to simplified dictionaries
     for API responses.
     """
+
+    @classmethod
+    def _validate_data_or_default(cls: type[T], data: Any) -> T | None:
+        """
+        Validate API response data, returning a default instance if invalid.
+
+        This helper consolidates the common validation pattern used in
+        from_api_response methods across all model classes.
+
+        Args:
+            data: The API response data to validate
+
+        Returns:
+            A default instance of the model if data is empty or not a dict,
+            None if data is valid and processing should continue.
+
+        Example:
+            @classmethod
+            def from_api_response(cls, data: dict[str, Any], **kwargs) -> "MyModel":
+                if (default := cls._validate_data_or_default(data)) is not None:
+                    return default
+                # ... continue processing valid data
+        """
+        if not data:
+            logger.debug(f"Received empty data, returning default {cls.__name__} instance")
+            return cls()
+        if not isinstance(data, dict):
+            logger.debug(f"Received non-dictionary data, returning default {cls.__name__} instance")
+            return cls()
+        return None
 
     @classmethod
     def from_api_response(cls: type[T], data: dict[str, Any], **kwargs: Any) -> T:

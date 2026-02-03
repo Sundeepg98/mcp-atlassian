@@ -4,14 +4,19 @@ Jira worklog models.
 This module provides Pydantic models for Jira worklogs (time tracking entries).
 """
 
+__all__ = ["JiraWorklog"]
+
 import logging
 from typing import Any
+
+from mcp_atlassian.utils import safe_int
 
 from ..base import ApiModel, TimestampMixin
 from ..constants import (
     EMPTY_STRING,
     JIRA_DEFAULT_ID,
 )
+from .adf import adf_to_text
 from .common import JiraUser
 
 logger = logging.getLogger(__name__)
@@ -45,13 +50,8 @@ class JiraWorklog(ApiModel, TimestampMixin):
         Returns:
             A JiraWorklog instance
         """
-        if not data:
-            return cls()
-
-        # Handle non-dictionary data by returning a default instance
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Extract author data
         author = None
@@ -64,24 +64,25 @@ class JiraWorklog(ApiModel, TimestampMixin):
         if worklog_id is not None:
             worklog_id = str(worklog_id)
 
-        # Parse time spent seconds with type safety
-        time_spent_seconds = data.get("timeSpentSeconds", 0)
-        try:
-            time_spent_seconds = (
-                int(time_spent_seconds) if time_spent_seconds is not None else 0
-            )
-        except (ValueError, TypeError):
-            time_spent_seconds = 0
+        # Handle comment - convert from ADF if needed
+        raw_comment = data.get("comment")
+        comment: str | None = None
+        if isinstance(raw_comment, dict):
+            # Comment is in ADF format, convert to text
+            comment = adf_to_text(raw_comment)
+        elif isinstance(raw_comment, str):
+            comment = raw_comment
+        # else: comment remains None
 
         return cls(
             id=worklog_id,
             author=author,
-            comment=data.get("comment"),
+            comment=comment,
             created=str(data.get("created", EMPTY_STRING)),
             updated=str(data.get("updated", EMPTY_STRING)),
             started=str(data.get("started", EMPTY_STRING)),
             time_spent=str(data.get("timeSpent", EMPTY_STRING)),
-            time_spent_seconds=time_spent_seconds,
+            time_spent_seconds=safe_int(data.get("timeSpentSeconds"), 0),
         )
 
     def to_simplified_dict(self) -> dict[str, Any]:

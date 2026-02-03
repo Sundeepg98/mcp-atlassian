@@ -3,6 +3,8 @@ Confluence comment models.
 This module provides Pydantic models for Confluence page comments.
 """
 
+__all__ = ["ConfluenceComment"]
+
 import logging
 from typing import Any
 
@@ -44,8 +46,8 @@ class ConfluenceComment(ApiModel, TimestampMixin):
         Returns:
             A ConfluenceComment instance
         """
-        if not data:
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         author = None
         if author_data := data.get("author"):

@@ -4,6 +4,8 @@ Jira issue models.
 This module provides Pydantic models for Jira issues.
 """
 
+__all__ = ["JiraIssue"]
+
 import logging
 import re
 from typing import Any, Literal
@@ -30,6 +32,7 @@ from .common import (
 )
 from .link import JiraIssueLink
 from .project import JiraProject
+
 
 logger = logging.getLogger(__name__)
 
@@ -252,13 +255,8 @@ class JiraIssue(ApiModel, TimestampMixin):
         Returns:
             A JiraIssue instance
         """
-        if not data:
-            return cls()
-
-        # Handle non-dictionary data by returning a default instance
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         fields = data.get("fields", {})
         if not isinstance(fields, dict):
@@ -389,10 +387,14 @@ class JiraIssue(ApiModel, TimestampMixin):
         changelogs = []
         changelogs_data = data.get("changelog", {})
         if isinstance(changelogs_data, dict) and "histories" in changelogs_data:
-            changelogs = [
-                JiraChangelog.from_api_response(history)
-                for history in changelogs_data["histories"]
-            ]
+            histories = changelogs_data["histories"]
+            if isinstance(histories, list):
+                changelogs = [
+                    JiraChangelog.from_api_response(history)
+                    for history in histories
+                ]
+            else:
+                logger.debug(f"Expected list for histories, got {type(histories)}")
 
         # Handling attachments
         attachments = []
@@ -421,7 +423,10 @@ class JiraIssue(ApiModel, TimestampMixin):
         epic_link = cls._find_custom_field_in_api_response(
             fields, ["epic link", "parent epic"]
         )
-        if isinstance(epic_link, str):
+        if isinstance(epic_link, dict):
+            # Handle dict format (contains key/id properties)
+            epic_key = epic_link.get("key") or epic_link.get("id")
+        elif isinstance(epic_link, str):
             epic_key = epic_link
 
         # Check for "Epic Name" field
@@ -494,11 +499,15 @@ class JiraIssue(ApiModel, TimestampMixin):
 
         # Helper method to check if a field should be included
         def should_include_field(field_name: str) -> bool:
-            return (
-                self.requested_fields == "*all"
-                or not isinstance(self.requested_fields, list)
-                or field_name in self.requested_fields
-            )
+            if self.requested_fields == "*all":
+                return True
+            if not isinstance(self.requested_fields, list):
+                return True
+            # Lazy import to avoid circular dependency
+            from mcp_atlassian.jira.constants import PYTHON_TO_API_FIELD_MAP
+            # Check both Python name and API name to support both conventions
+            api_name = PYTHON_TO_API_FIELD_MAP.get(field_name, field_name)
+            return field_name in self.requested_fields or api_name in self.requested_fields
 
         # Add summary if requested
         if should_include_field("summary"):

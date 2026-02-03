@@ -3,6 +3,8 @@ Confluence search result models.
 This module provides Pydantic models for Confluence search (CQL) results.
 """
 
+__all__ = ["ConfluenceSearchResult"]
+
 import logging
 from typing import Any
 
@@ -44,8 +46,8 @@ class ConfluenceSearchResult(ApiModel, TimestampMixin):
         Returns:
             A ConfluenceSearchResult instance
         """
-        if not data:
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Convert search results to ConfluencePage models
         results = []

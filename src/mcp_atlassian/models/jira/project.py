@@ -4,6 +4,8 @@ Jira project models.
 This module provides Pydantic models for Jira projects.
 """
 
+__all__ = ["JiraProject"]
+
 import logging
 from typing import Any
 
@@ -13,6 +15,7 @@ from ..constants import (
     JIRA_DEFAULT_PROJECT,
     UNKNOWN,
 )
+from .adf import adf_to_text
 from .common import JiraUser
 
 logger = logging.getLogger(__name__)
@@ -46,13 +49,8 @@ class JiraProject(ApiModel):
         Returns:
             A JiraProject instance
         """
-        if not data:
-            return cls()
-
-        # Handle non-dictionary data by returning a default instance
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Extract lead data if available
         lead = None
@@ -78,11 +76,18 @@ class JiraProject(ApiModel):
         if project_id is not None:
             project_id = str(project_id)
 
+        # Handle description - can be string or ADF dict (Jira Cloud)
+        raw_description = data.get("description")
+        if isinstance(raw_description, dict):
+            description = adf_to_text(raw_description)
+        else:
+            description = raw_description
+
         return cls(
             id=project_id,
             key=str(data.get("key", EMPTY_STRING)),
             name=str(data.get("name", UNKNOWN)),
-            description=data.get("description"),
+            description=description,
             lead=lead,
             url=data.get("self"),  # API URL for the project
             category_name=category_name,

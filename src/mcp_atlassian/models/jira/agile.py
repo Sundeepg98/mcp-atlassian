@@ -5,6 +5,8 @@ This module provides Pydantic models for Jira agile entities,
 such as boards and sprints.
 """
 
+__all__ = ["JiraBoard", "JiraSprint"]
+
 import logging
 from typing import Any
 
@@ -38,13 +40,8 @@ class JiraBoard(ApiModel):
         Returns:
             A JiraBoard instance
         """
-        if not data:
-            return cls()
-
-        # Handle non-dictionary data by returning a default instance
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Ensure ID is a string
         board_id = data.get("id", JIRA_DEFAULT_ID)
@@ -97,13 +94,8 @@ class JiraSprint(ApiModel):
         Returns:
             A JiraSprint instance
         """
-        if not data:
-            return cls()
-
-        # Handle non-dictionary data by returning a default instance
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Ensure ID and origin board ID are strings
         sprint_id = data.get("id", JIRA_DEFAULT_ID)
@@ -120,13 +112,13 @@ class JiraSprint(ApiModel):
 
         return cls(
             id=sprint_id,
-            state=str(data.get("state", UNKNOWN)),
-            name=str(data.get("name", UNKNOWN)),
-            start_date=str(data.get("startDate", EMPTY_STRING)),
-            end_date=str(data.get("endDate", EMPTY_STRING)),
-            activated_date=str(data.get("activatedDate", EMPTY_STRING)),
+            state=str(data.get("state") or UNKNOWN),
+            name=str(data.get("name") or UNKNOWN),
+            start_date=str(data.get("startDate") or EMPTY_STRING),
+            end_date=str(data.get("endDate") or EMPTY_STRING),
+            activated_date=str(data.get("activatedDate") or EMPTY_STRING),
             origin_board_id=origin_board_id,
-            goal=str(data.get("goal", EMPTY_STRING)),
+            goal=str(data.get("goal") or EMPTY_STRING),
             synced=synced,
             auto_start_stop=auto_start_stop,
         )

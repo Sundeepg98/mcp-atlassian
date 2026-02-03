@@ -5,6 +5,8 @@ This module provides Pydantic models for Jira workflow entities,
 such as transitions between statuses.
 """
 
+__all__ = ["JiraTransition"]
+
 import logging
 from typing import Any
 
@@ -45,13 +47,8 @@ class JiraTransition(ApiModel):
         Returns:
             A JiraTransition instance
         """
-        if not data:
-            return cls()
-
-        # Handle non-dictionary data by returning a default instance
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Extract to_status data if available
         to_status = None

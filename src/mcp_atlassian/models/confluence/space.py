@@ -3,6 +3,8 @@ Confluence space models.
 This module provides Pydantic models for Confluence spaces.
 """
 
+__all__ = ["ConfluenceSpace"]
+
 import logging
 from typing import Any
 
@@ -36,8 +38,8 @@ class ConfluenceSpace(ApiModel):
         Returns:
             A ConfluenceSpace instance
         """
-        if not data:
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         return cls(
             id=str(data.get("id", CONFLUENCE_DEFAULT_ID)),

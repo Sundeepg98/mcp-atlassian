@@ -3,6 +3,8 @@ Confluence page models.
 This module provides Pydantic models for Confluence pages and their versions.
 """
 
+__all__ = ["ConfluenceVersion", "ConfluencePage"]
+
 import logging
 import warnings
 from typing import Any
@@ -45,8 +47,8 @@ class ConfluenceVersion(ApiModel, TimestampMixin):
         Returns:
             A ConfluenceVersion instance
         """
-        if not data:
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         by_user = None
         if by_data := data.get("by"):
@@ -95,17 +97,18 @@ class ConfluencePage(ApiModel, TimestampMixin):
     children: dict[str, Any] = Field(default_factory=dict)
     attachments: list[ConfluenceAttachment] = Field(default_factory=list)
     url: str | None = None
-    emoji: str | None = None  # Page title emoji (icon shown in navigation)
 
     @property
     def page_content(self) -> str:
         """
         Alias for content to maintain compatibility with tests.
 
-        Deprecated: Use content instead.
+        .. deprecated:: 0.12.0
+            Use :attr:`content` instead. Will be removed in v1.0.0.
         """
         warnings.warn(
-            "The 'page_content' property is deprecated. Use 'content' instead.",
+            "The 'page_content' property is deprecated and will be removed in v1.0.0. "
+            "Use 'content' instead.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -128,8 +131,8 @@ class ConfluencePage(ApiModel, TimestampMixin):
         Returns:
             A ConfluencePage instance
         """
-        if not data:
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Extract space information first to ensure it's available for URL construction
         space_data = data.get("space", {})
@@ -218,9 +221,6 @@ class ConfluencePage(ApiModel, TimestampMixin):
                 # Server format: {base_url}/pages/viewpage.action?pageId={page_id}
                 url = f"{base_url}/pages/viewpage.action?pageId={url_id}"
 
-        # Extract emoji from kwargs if provided
-        emoji = kwargs.get("emoji")
-
         return cls(
             id=str(data.get("id", CONFLUENCE_DEFAULT_ID)),
             title=data.get("title", EMPTY_STRING),
@@ -237,7 +237,6 @@ class ConfluencePage(ApiModel, TimestampMixin):
             children=data.get("children", {}),
             attachments=attachments,
             url=url,
-            emoji=emoji,
         )
 
     def to_simplified_dict(self) -> dict[str, Any]:
@@ -279,9 +278,5 @@ class ConfluencePage(ApiModel, TimestampMixin):
                 for a in self.ancestors
                 if "id" in a
             ]
-
-        # Add emoji if available
-        if self.emoji:
-            result["emoji"] = self.emoji
 
         return result

@@ -4,6 +4,13 @@ Jira issue link models.
 This module provides Pydantic models for Jira issue links and link types.
 """
 
+__all__ = [
+    "JiraIssueLinkType",
+    "JiraLinkedIssueFields",
+    "JiraLinkedIssue",
+    "JiraIssueLink",
+]
+
 import logging
 from typing import Any
 
@@ -38,12 +45,8 @@ class JiraIssueLinkType(ApiModel):
         Returns:
             A JiraIssueLinkType instance
         """
-        if not data:
-            return cls()
-
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         link_type_id = data.get("id", JIRA_DEFAULT_ID)
         if link_type_id is not None:
@@ -95,12 +98,8 @@ class JiraLinkedIssueFields(ApiModel):
         Returns:
             A JiraLinkedIssueFields instance
         """
-        if not data:
-            return cls()
-
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Extract status data
         status = None
@@ -168,12 +167,8 @@ class JiraLinkedIssue(ApiModel):
         Returns:
             A JiraLinkedIssue instance
         """
-        if not data:
-            return cls()
-
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Extract fields data
         fields = None
@@ -230,12 +225,8 @@ class JiraIssueLink(ApiModel):
         Returns:
             A JiraIssueLink instance
         """
-        if not data:
-            return cls()
-
-        if not isinstance(data, dict):
-            logger.debug("Received non-dictionary data, returning default instance")
-            return cls()
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
 
         # Extract link type data
         link_type = None
