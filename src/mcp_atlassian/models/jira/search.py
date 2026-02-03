@@ -76,10 +76,10 @@ class JiraSearchResult(ApiModel):
         Returns:
             The validated JiraSearchResult instance
         """
-        # Ensure non-negative pagination values
-        if self.start_at < 0:
+        # Keep -1 as sentinel for "not provided by API", only reset truly invalid values
+        if self.start_at < -1:
             self.start_at = 0
-        if self.max_results < 0:
+        if self.max_results < -1:
             self.max_results = 0
         # Note: total can be -1 for v3 cloud API which doesn't provide counts
         if self.total < -1:
