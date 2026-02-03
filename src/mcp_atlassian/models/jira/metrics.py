@@ -21,8 +21,10 @@ class StatusChangeEntry(ApiModel):
     including duration spent in that status.
     """
 
-    status: str = Field(description="The name of the status")
-    entered_at: datetime = Field(description="When the issue entered this status")
+    status: str = Field(default="", description="The name of the status")
+    entered_at: datetime | None = Field(
+        default=None, description="When the issue entered this status"
+    )
     exited_at: datetime | None = Field(
         default=None,
         description="When the issue exited this status (None if current status)",
@@ -42,14 +44,17 @@ class StatusChangeEntry(ApiModel):
         cls, data: dict[str, Any], **kwargs: Any
     ) -> "StatusChangeEntry":
         """Create a StatusChangeEntry from data."""
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
         return cls(**data)
 
     def to_simplified_dict(self) -> dict[str, Any]:
         """Convert to simplified dictionary for API response."""
         result: dict[str, Any] = {
             "status": self.status,
-            "entered_at": self.entered_at.isoformat(),
         }
+        if self.entered_at:
+            result["entered_at"] = self.entered_at.isoformat()
         if self.exited_at:
             result["exited_at"] = self.exited_at.isoformat()
         if self.duration_minutes is not None:
@@ -69,11 +74,13 @@ class StatusTimeSummary(ApiModel):
     in each status across all transitions.
     """
 
-    status: str = Field(description="The name of the status")
+    status: str = Field(default="", description="The name of the status")
     total_duration_minutes: int = Field(
-        description="Total minutes spent in this status across all visits"
+        default=0, description="Total minutes spent in this status across all visits"
     )
-    total_duration_formatted: str = Field(description="Human-readable total duration")
+    total_duration_formatted: str = Field(
+        default="", description="Human-readable total duration"
+    )
     visit_count: int = Field(
         default=1, description="Number of times the issue was in this status"
     )
@@ -83,6 +90,8 @@ class StatusTimeSummary(ApiModel):
         cls, data: dict[str, Any], **kwargs: Any
     ) -> "StatusTimeSummary":
         """Create a StatusTimeSummary from data."""
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
         return cls(**data)
 
     def to_simplified_dict(self) -> dict[str, Any]:
@@ -103,7 +112,9 @@ class IssueDatesResponse(ApiModel):
     providing both core dates and optional status change history.
     """
 
-    issue_key: str = Field(description="The Jira issue key (e.g., 'PROJ-123')")
+    issue_key: str = Field(
+        default="", description="The Jira issue key (e.g., 'PROJ-123')"
+    )
     created: datetime | None = Field(
         default=None, description="When the issue was created"
     )
@@ -131,6 +142,8 @@ class IssueDatesResponse(ApiModel):
         cls, data: dict[str, Any], **kwargs: Any
     ) -> "IssueDatesResponse":
         """Create an IssueDatesResponse from data."""
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
         status_changes = [
             StatusChangeEntry.from_api_response(sc)
             for sc in data.get("status_changes", [])
@@ -206,6 +219,8 @@ class IssueDatesBatchResponse(ApiModel):
         cls, data: dict[str, Any], **kwargs: Any
     ) -> "IssueDatesBatchResponse":
         """Create an IssueDatesBatchResponse from data."""
+        if (default := cls._validate_data_or_default(data)) is not None:
+            return default
         issues = [
             IssueDatesResponse.from_api_response(issue)
             for issue in data.get("issues", [])
