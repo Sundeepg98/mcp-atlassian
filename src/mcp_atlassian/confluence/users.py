@@ -6,6 +6,7 @@ from typing import Any
 from requests.exceptions import HTTPError
 
 from ..exceptions import MCPAtlassianAuthenticationError
+from ..utils.errors import raise_for_auth_error
 from .client import ConfluenceClient
 
 logger = logging.getLogger("mcp-atlassian")
@@ -73,16 +74,8 @@ class UsersMixin(ConfluenceClient):
                 )
             return user_data
         except HTTPError as http_err:
-            if http_err.response is not None and http_err.response.status_code in [
-                401,
-                403,
-            ]:
-                logger.warning(
-                    f"Confluence token validation failed with HTTP {http_err.response.status_code} for /rest/api/user/current."
-                )
-                raise MCPAtlassianAuthenticationError(
-                    f"Confluence token validation failed: {http_err.response.status_code} from /rest/api/user/current"
-                ) from http_err
+            raise_for_auth_error(http_err, "validating Confluence token")
+            # For token validation, treat all HTTP errors as auth failures
             logger.error(
                 f"HTTPError when calling Confluence /rest/api/user/current: {http_err}",
                 exc_info=True,
