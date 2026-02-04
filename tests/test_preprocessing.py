@@ -611,6 +611,136 @@ def test_markdown_to_jira_bold_without_space_still_converts(preprocessor_with_ji
     assert preprocessor_with_jira.markdown_to_jira("*italic text*") == "_italic text_"
 
 
+class TestJiraStrikethrough:
+    """Tests for Jira strikethrough conversion (bug fix for no-op regex)."""
+
+    def test_strikethrough_jira_to_markdown(self, preprocessor_with_jira):
+        """Test basic strikethrough conversion: Jira -text- to Markdown ~~text~~."""
+        assert preprocessor_with_jira.jira_to_markdown("-deleted-") == "~~deleted~~"
+
+    def test_strikethrough_with_spaces(self, preprocessor_with_jira):
+        """Test strikethrough with spaces inside."""
+        assert (
+            preprocessor_with_jira.jira_to_markdown("-deleted text-")
+            == "~~deleted text~~"
+        )
+
+    def test_strikethrough_in_sentence(self, preprocessor_with_jira):
+        """Test strikethrough within a sentence."""
+        result = preprocessor_with_jira.jira_to_markdown("This is -deleted- text")
+        assert "~~deleted~~" in result
+
+    def test_empty_strikethrough_not_matched(self, preprocessor_with_jira):
+        """Test that -- is not converted (empty content)."""
+        assert preprocessor_with_jira.jira_to_markdown("--") == "--"
+
+    def test_multiple_strikethroughs(self, preprocessor_with_jira):
+        """Test multiple strikethroughs in same text."""
+        result = preprocessor_with_jira.jira_to_markdown("-one- and -two-")
+        assert "~~one~~" in result
+        assert "~~two~~" in result
+
+    def test_strikethrough_markdown_to_jira(self, preprocessor_with_jira):
+        """Test reverse: Markdown ~~text~~ to Jira -text-."""
+        assert preprocessor_with_jira.markdown_to_jira("~~deleted~~") == "-deleted-"
+
+    def test_strikethrough_roundtrip(self, preprocessor_with_jira):
+        """Test Jira -> Markdown -> Jira roundtrip."""
+        jira_original = "-deleted text-"
+        markdown = preprocessor_with_jira.jira_to_markdown(jira_original)
+        assert markdown == "~~deleted text~~"
+        jira_back = preprocessor_with_jira.markdown_to_jira(markdown)
+        assert jira_back == "-deleted text-"
+
+
+class TestJiraCitation:
+    """Tests for Jira citation conversion (bug fix for single char edge case)."""
+
+    def test_citation_basic(self, preprocessor_with_jira):
+        """Test basic citation conversion."""
+        result = preprocessor_with_jira.jira_to_markdown("??citation??")
+        assert result == "<cite>citation</cite>"
+
+    def test_citation_single_char(self, preprocessor_with_jira):
+        """Test single character citation (edge case that was broken)."""
+        result = preprocessor_with_jira.jira_to_markdown("??a??")
+        assert result == "<cite>a</cite>"
+
+    def test_citation_with_spaces(self, preprocessor_with_jira):
+        """Test citation with spaces."""
+        result = preprocessor_with_jira.jira_to_markdown("??cited text??")
+        assert result == "<cite>cited text</cite>"
+
+    def test_citation_in_sentence(self, preprocessor_with_jira):
+        """Test citation within a sentence."""
+        result = preprocessor_with_jira.jira_to_markdown("He said ??hello?? to her")
+        assert "<cite>hello</cite>" in result
+
+    def test_empty_citation_not_matched(self, preprocessor_with_jira):
+        """Test that ???? is not converted (empty content)."""
+        result = preprocessor_with_jira.jira_to_markdown("????")
+        assert result == "????"
+
+
+class TestJiraInsertedText:
+    """Tests for Jira inserted text (+text+) conversion."""
+
+    def test_inserted_basic(self, preprocessor_with_jira):
+        """Test basic inserted text conversion."""
+        result = preprocessor_with_jira.jira_to_markdown("+inserted+")
+        assert result == "<ins>inserted</ins>"
+
+    def test_empty_inserted_not_matched(self, preprocessor_with_jira):
+        """Test that ++ is not converted (empty content)."""
+        assert preprocessor_with_jira.jira_to_markdown("++") == "++"
+
+
+class TestJiraSuperscript:
+    """Tests for Jira superscript (^text^) conversion."""
+
+    def test_superscript_basic(self, preprocessor_with_jira):
+        """Test basic superscript conversion."""
+        result = preprocessor_with_jira.jira_to_markdown("^super^")
+        assert result == "<sup>super</sup>"
+
+    def test_empty_superscript_not_matched(self, preprocessor_with_jira):
+        """Test that ^^ is not converted (empty content)."""
+        assert preprocessor_with_jira.jira_to_markdown("^^") == "^^"
+
+
+class TestJiraSubscript:
+    """Tests for Jira subscript (~text~) conversion."""
+
+    def test_subscript_basic(self, preprocessor_with_jira):
+        """Test basic subscript conversion."""
+        result = preprocessor_with_jira.jira_to_markdown("~sub~")
+        assert result == "<sub>sub</sub>"
+
+    def test_empty_subscript_not_matched(self, preprocessor_with_jira):
+        """Test that ~~ is not converted (empty content)."""
+        assert preprocessor_with_jira.jira_to_markdown("~~") == "~~"
+
+
+class TestJiraCombinedFormatting:
+    """Tests for multiple formatting elements together."""
+
+    def test_all_special_formatting(self, preprocessor_with_jira):
+        """Test all special formatting in one text."""
+        jira_text = """Text with:
++inserted+ text
+-deleted- text
+^super^ script
+~sub~ script
+??citation??"""
+        result = preprocessor_with_jira.jira_to_markdown(jira_text)
+
+        assert "<ins>inserted</ins>" in result
+        assert "~~deleted~~" in result
+        assert "<sup>super</sup>" in result
+        assert "<sub>sub</sub>" in result
+        assert "<cite>citation</cite>" in result
+
+
 def test_md2conf_elements_from_string_available():
     """Test that elements_from_string is importable with fallback (issue #817)."""
     from mcp_atlassian.preprocessing.confluence import elements_from_string

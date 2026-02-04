@@ -154,20 +154,22 @@ class JiraPreprocessor(BasePreprocessor):
         # Inline code
         output = re.sub(r"\{\{([^}]+)\}\}", r"`\1`", output)
 
-        # Citation
-        output = re.sub(r"\?\?((?:.[^?]|[^?].)+)\?\?", r"<cite>\1</cite>", output)
+        # Citation (non-greedy to handle nested ?)
+        output = re.sub(r"\?\?(.+?)\?\?", r"<cite>\1</cite>", output)
 
-        # Inserted text
-        output = re.sub(r"\+([^+]*)\+", r"<ins>\1</ins>", output)
+        # Inserted text (require at least one char to avoid matching ++)
+        output = re.sub(r"\+([^+]+)\+", r"<ins>\1</ins>", output)
 
-        # Superscript
-        output = re.sub(r"\^([^^]*)\^", r"<sup>\1</sup>", output)
+        # Superscript (require at least one char to avoid matching ^^)
+        output = re.sub(r"\^([^^]+)\^", r"<sup>\1</sup>", output)
 
-        # Subscript
-        output = re.sub(r"~([^~]*)~", r"<sub>\1</sub>", output)
+        # Subscript (require at least one char to avoid matching ~~)
+        output = re.sub(r"~([^~]+)~", r"<sub>\1</sub>", output)
 
-        # Strikethrough
-        output = re.sub(r"-([^-]*)-", r"-\1-", output)
+        # Strikethrough: Jira -text- to Markdown ~~text~~
+        # Constraints: not inside issue keys (PROJ-123), doesn't span lines
+        strikethrough_pattern = r"(?<![A-Za-z0-9])-([^-\n]+)-(?![A-Za-z0-9])"
+        output = re.sub(strikethrough_pattern, r"~~\1~~", output)
 
         # Code blocks with optional language specification
         output = re.sub(
@@ -376,8 +378,8 @@ class JiraPreprocessor(BasePreprocessor):
             flags=re.MULTILINE,
         )
 
-        # Strikethrough
-        output = re.sub(r"~~(.*?)~~", r"-\1-", output)
+        # Strikethrough: Markdown ~~text~~ to Jira -text-
+        output = re.sub(r"~~(.+?)~~", r"-\1-", output)
 
         # Images without alt text
         output = re.sub(r"!\[\]\(([^)\n\s]+)\)", r"!\1!", output)
